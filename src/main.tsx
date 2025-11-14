@@ -1,7 +1,34 @@
 
-  import { createRoot } from "react-dom/client";
-  import App from "./App.tsx";
-  import "./index.css";
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+import { useAuthStore } from "./store/authStore";
+import { signalRClient } from "./services/websocket/signalrClient";
 
-  createRoot(document.getElementById("root")!).render(<App />);
+// Inicializar autenticação do localStorage
+console.log('[main.tsx] Calling init()...');
+useAuthStore.getState().init();
+
+// Verificar estado após inicialização
+const { isAuthenticated, isInitialized, accessToken, sessionId, user } = useAuthStore.getState();
+console.log('[main.tsx] After init() - State:');
+console.log('  - isInitialized:', isInitialized);
+console.log('  - isAuthenticated:', isAuthenticated);
+console.log('  - hasAccessToken:', !!accessToken);
+console.log('  - hasSessionId:', !!sessionId);
+console.log('  - hasUser:', !!user);
+console.log('  - Current pathname:', window.location.pathname);
+
+// Conectar WebSocket se usuário já estiver autenticado
+if (isAuthenticated) {
+  console.log('[main.tsx] User is authenticated, connecting WebSocket...');
+  signalRClient.connect().catch((error) => {
+    console.error('[main.tsx] Erro ao conectar WebSocket na inicialização:', error);
+  });
+} else {
+  console.log('[main.tsx] User is NOT authenticated');
+}
+
+console.log('[main.tsx] Rendering App component...');
+createRoot(document.getElementById("root")!).render(<App />);
   

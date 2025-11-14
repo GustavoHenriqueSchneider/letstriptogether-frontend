@@ -78,6 +78,7 @@
     --color-orange-200: oklch(.901 .076 70.697);
     --color-orange-500: oklch(.705 .213 47.604);
     --color-orange-600: oklch(.646 .222 41.116);
+    --color-orange-700: oklch(55.3% 0.195 38.402);
     --color-orange-800: oklch(.47 .157 37.304);
     --color-yellow-100: oklch(.973 .071 103.193);
     --color-yellow-500: oklch(.795 .184 86.047);
@@ -1293,6 +1294,10 @@
     background-color: var(--color-orange-100);
   }
 
+  .bg-orange-600 {
+    background-color: var(--color-orange-600);
+  }
+
   .bg-primary {
     background-color: var(--primary);
   }
@@ -2125,6 +2130,10 @@
     .hover\:bg-orange-50:hover {
       background-color: var(--color-orange-50);
     }
+
+    .hover\:bg-orange-700:hover {
+      background-color: var(--color-orange-700);
+    }
   }
 
   @media (hover: hover) {
@@ -2644,7 +2653,7 @@
   --destructive-foreground: #fff;
   --border: #01001d1a;
   --input: transparent;
-  --input-background: #f8f9fa;
+  --input-background: #f1f1f1;
   --switch-background: #dee2e6;
   --font-weight-medium: 500;
   --font-weight-normal: 400;

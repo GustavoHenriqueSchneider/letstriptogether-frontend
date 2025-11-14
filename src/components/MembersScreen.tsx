@@ -1,117 +1,183 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { 
-  ArrowLeft,
   Users,
   Globe,
-  Star,
   Settings,
-  Crown,
   UserPlus,
-  MoreVertical,
-  Calendar,
-  MapPin
+  Star,
+  X
 } from 'lucide-react';
 import { Header } from './Header';
+import { useModalStore } from '@/store/modalStore';
+import { membersApi } from '@/services/api/members';
+import { groupsApi } from '@/services/api/groups';
+import type { Member } from '@/types';
 
 interface MembersScreenProps {
+  groupId: string;
+  groupName?: string;
   onNavigate: (screen: string) => void;
   showInviteLink: () => void;
 }
 
-interface Member {
-  id: number;
-  name: string;
-  avatar?: string;
-  isAdmin: boolean;
-  status: 'voted' | 'pending' | 'offline';
-  joinedDate: string;
-  votesCount: number;
-}
+export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }: MembersScreenProps) {
+  const { showDeleteConfirmation, closeModal, openModal, showSuccess, showError } = useModalStore();
+  const [members, setMembers] = useState<Member[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [allMembersLoaded, setAllMembersLoaded] = useState(false);
+  const [isCurrentUserOwner, setIsCurrentUserOwner] = useState(false);
+  const hasHandled404 = useRef(false);
+  const pageSize = 10;
 
-export function MembersScreen({ onNavigate, showInviteLink }: MembersScreenProps) {
-  const [members] = useState<Member[]>([
-    {
-      id: 1,
-      name: "João Silva",
-      isAdmin: true,
-      status: "voted",
-      joinedDate: "2024-01-15",
-      votesCount: 12
-    },
-    {
-      id: 2,
-      name: "Maria Santos",
-      isAdmin: false,
-      status: "voted",
-      joinedDate: "2024-01-16",
-      votesCount: 8
-    },
-    {
-      id: 3,
-      name: "Pedro Costa",
-      isAdmin: false,
-      status: "pending",
-      joinedDate: "2024-01-18",
-      votesCount: 5
-    },
-    {
-      id: 4,
-      name: "Ana Oliveira",
-      isAdmin: false,
-      status: "voted",
-      joinedDate: "2024-01-17",
-      votesCount: 10
-    },
-    {
-      id: 5,
-      name: "Carlos Pereira",
-      isAdmin: false,
-      status: "offline",
-      joinedDate: "2024-01-19",
-      votesCount: 3
-    },
-    {
-      id: 6,
-      name: "Lucia Ferreira",
-      isAdmin: false,
-      status: "voted",
-      joinedDate: "2024-01-20",
-      votesCount: 7
+  // Carregar grupo para verificar se usuário é owner
+  useEffect(() => {
+    const loadGroupInfo = async () => {
+      try {
+        const group = await groupsApi.getById(groupId);
+        setIsCurrentUserOwner(group.isOwner || false);
+      } catch (error) {
+        console.error('[MembersScreen] Erro ao carregar informações do grupo:', error);
+      }
+    };
+    loadGroupInfo();
+  }, [groupId]);
+
+  // Verificar se o grupo existe antes de carregar membros
+  useEffect(() => {
+    hasHandled404.current = false; // Resetar flag ao mudar de grupo
+    let isMounted = true;
+    
+    const verifyAndLoadMembers = async () => {
+      try {
+        // Primeiro verificar se o grupo existe
+        await groupsApi.getById(groupId);
+        // Se chegou aqui, o grupo existe - carregar membros
+        if (isMounted) {
+          await loadMembers(1, true);
+        }
+      } catch (error: any) {
+        console.error('[MembersScreen] Erro ao verificar grupo:', error);
+        if (isMounted && error.response?.status === 404 && !hasHandled404.current) {
+          hasHandled404.current = true;
+          showError(
+            'Grupo não encontrado',
+            'O grupo que você está tentando acessar não foi encontrado.',
+            () => {
+              onNavigate('dashboard');
+            }
+          );
+        }
+      }
+    };
+    
+    verifyAndLoadMembers();
+    
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId]); // loadMembers não está nas dependências para evitar loop
+
+  // Detectar scroll para carregar mais membros
+  useEffect(() => {
+    const handleScroll = () => {
+      // Verificar se chegou ao final da página
+      if (
+        window.innerHeight + document.documentElement.scrollTop >=
+        document.documentElement.offsetHeight - 100 // 100px antes do fim
+      ) {
+        if (!isLoadingMore && hasMore && !isLoading && !allMembersLoaded) {
+          loadMoreMembers();
+        }
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, hasMore, isLoading, allMembersLoaded]);
+
+  const loadMembers = async (page = 1, isInitial = false) => {
+    if (isInitial) {
+      setIsLoading(true);
+      openModal('loading');
+    } else {
+      setIsLoadingMore(true);
     }
-  ]);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'voted': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'offline': return 'bg-gray-100 text-gray-600';
-      default: return 'bg-gray-100 text-gray-600';
+    
+    try {
+      const result = await membersApi.getByGroup(groupId, page, pageSize);
+      
+      if (isInitial) {
+        setMembers(result.members);
+      } else {
+        setMembers(prev => [...prev, ...result.members]);
+      }
+      
+      setHasMore(result.hasMore);
+      setCurrentPage(page);
+      setAllMembersLoaded(!result.hasMore);
+    } catch (error: any) {
+      console.error('[MembersScreen] Erro ao carregar membros:', error);
+      if (isInitial) {
+        // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
+        if (error.response?.status === 404 && !hasHandled404.current) {
+          hasHandled404.current = true;
+          showError(
+            'Grupo não encontrado',
+            'O grupo que você está tentando acessar não foi encontrado.',
+            () => {
+              onNavigate('dashboard');
+            }
+          );
+        } else if (error.response?.status !== 404) {
+          showError('Erro ao carregar membros', error.response?.data?.message || 'Não foi possível carregar os membros do grupo');
+        }
+      }
+    } finally {
+      if (isInitial) {
+        setIsLoading(false);
+        closeModal('loading');
+      } else {
+        setIsLoadingMore(false);
+      }
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'voted': return 'Votou';
-      case 'pending': return 'Pendente';
-      case 'offline': return 'Offline';
-      default: return 'Desconhecido';
-    }
+  const loadMoreMembers = async () => {
+    if (isLoadingMore || !hasMore || allMembersLoaded) return;
+    
+    const nextPage = currentPage + 1;
+    await loadMembers(nextPage, false);
   };
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n.charAt(0)).slice(0, 2).join('');
-  };
+  // Ordenar membros por nome em ordem crescente
+  const sortedMembers = useMemo(() => {
+    return [...members].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [members]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR', { 
-      day: '2-digit', 
-      month: 'short' 
-    });
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    showDeleteConfirmation(
+      async () => {
+        try {
+          openModal('loading');
+          await membersApi.remove(groupId, memberId);
+          closeModal('loading');
+          showSuccess('Membro removido', `${memberName} foi removido do grupo com sucesso.`);
+          // Recarregar lista de membros do início
+          await loadMembers(1, true);
+        } catch (error: any) {
+          closeModal('loading');
+          showError('Erro ao remover membro', error.response?.data?.message || 'Não foi possível remover o membro do grupo');
+        }
+      },
+      'Remover membro do grupo',
+      `Tem certeza que deseja remover ${memberName} do grupo? Esta ação não pode ser desfeita.`
+    );
   };
 
   return (
@@ -119,120 +185,85 @@ export function MembersScreen({ onNavigate, showInviteLink }: MembersScreenProps
       {/* Header */}
       <Header 
         title="Membros do Grupo"
-        subtitle="Férias Europa 2024"
+        subtitle={groupName || 'Carregando...'}
         onBack={() => onNavigate('dashboard')}
-        rightContent={
-          <button className="p-2 hover:bg-gray-100 rounded-full">
-            <MoreVertical className="h-6 w-6 text-gray-600" />
-          </button>
-        }
       />
 
-      <div className="p-4 space-y-6">
-        {/* Group Stats */}
-        <div className="grid grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-[#01001D]">{members.length}</div>
-              <div className="text-sm text-gray-600">Membros</div>
+      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+        {/* Add Member Button - apenas para owners */}
+        {isCurrentUserOwner && (
+          <Card className="border-dashed border-2 border-[#6496D8] bg-blue-50 hover:bg-blue-100 hover:border-[#0E0652] transition-all duration-200">
+            <CardContent className="p-4 pb-4 flex items-center justify-center">
+              <button 
+                onClick={showInviteLink}
+                className="w-full flex items-center justify-center space-x-3 text-[#0E0652] hover:text-[#130F61] py-2 transition-all duration-200 hover:scale-105"
+              >
+                <UserPlus className="h-5 w-5" />
+                <span className="font-medium">Convidar novos membros</span>
+              </button>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {members.filter(m => m.status === 'voted').length}
-              </div>
-              <div className="text-sm text-gray-600">Votaram</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-yellow-600">
-                {members.filter(m => m.status === 'pending').length}
-              </div>
-              <div className="text-sm text-gray-600">Pendentes</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Add Member Button */}
-        <Card className="border-dashed border-2 border-[#6496D8] bg-blue-50">
-          <CardContent className="p-4">
-            <button 
-              onClick={showInviteLink}
-              className="w-full flex items-center justify-center space-x-3 text-[#0E0652] hover:text-[#130F61]"
-            >
-              <UserPlus className="h-5 w-5" />
-              <span className="font-medium">Convidar Novos Membros</span>
-            </button>
-          </CardContent>
-        </Card>
+        )}
 
         {/* Members List */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-[#01001D]">
               <Users className="h-5 w-5 mr-2" />
-              Lista de Membros
+              Lista de membros
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {members.map((member) => (
-              <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <div className="relative">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={member.avatar} />
-                      <AvatarFallback className="bg-[#6496D8] text-white">
-                        {getInitials(member.name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    {member.isAdmin && (
-                      <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-1">
-                        <Crown className="h-3 w-3 text-white" />
-                      </div>
+            {isLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">Carregando membros...</p>
+              </div>
+            ) : (
+              <>
+                {/* Usuário atual - "Você" */}
+                <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2 flex-1">
+                    <h3 className="font-medium text-[#01001D]">Você</h3>
+                    {isCurrentUserOwner && (
+                      <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
+                        Admin
+                      </Badge>
                     )}
                   </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
+                </div>
+
+                {/* Outros membros */}
+                {sortedMembers.map((member) => (
+                  <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center space-x-2 flex-1">
                       <h3 className="font-medium text-[#01001D]">{member.name}</h3>
-                      {member.isAdmin && (
+                      {!isCurrentUserOwner && member.role === 'owner' && (
                         <Badge variant="secondary" className="text-xs bg-yellow-100 text-yellow-800">
                           Admin
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      <span className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" />
-                        {formatDate(member.joinedDate)}
-                      </span>
-                      <span className="flex items-center">
-                        <Star className="h-3 w-3 mr-1" />
-                        {member.votesCount} votos
-                      </span>
-                    </div>
+                    {isCurrentUserOwner && (
+                      <button
+                        onClick={() => handleRemoveMember(member.id, member.name)}
+                        className="p-1 hover:bg-red-100 hover:border-2 hover:border-red-500 rounded-full transition-all duration-200 text-gray-500 hover:text-red-600 hover:scale-110 border-2 border-transparent"
+                        aria-label="Remover membro"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
                   </div>
-                </div>
+                ))}
 
-                <div className="flex flex-col items-end space-y-1">
-                  <Badge className={getStatusColor(member.status)}>
-                    {getStatusText(member.status)}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Group Info */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Criado em:</span>
-              <span className="font-medium text-[#01001D]">15 de Janeiro, 2024</span>
-            </div>
+                {/* Loading indicator ao carregar mais */}
+                {isLoadingMore && (
+                  <div className="text-center py-4">
+                    <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0E0652]"></div>
+                    <p className="text-sm text-gray-600 mt-2">Carregando mais membros...</p>
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -248,7 +279,7 @@ export function MembersScreen({ onNavigate, showInviteLink }: MembersScreenProps
             <span className="text-xs mt-1">Membros</span>
           </button>
           <button 
-            onClick={() => onNavigate('group-voting')}
+            onClick={() => onNavigate('group-vote')}
             className="flex flex-col items-center p-2 text-gray-600"
           >
             <Globe className="h-5 w-5" />
@@ -262,11 +293,11 @@ export function MembersScreen({ onNavigate, showInviteLink }: MembersScreenProps
             <span className="text-xs mt-1">Matches</span>
           </button>
           <button 
-            onClick={() => onNavigate('group-preferences')}
+            onClick={() => onNavigate('group-settings')}
             className="flex flex-col items-center p-2 text-gray-600"
           >
             <Settings className="h-5 w-5" />
-            <span className="text-xs mt-1">Config</span>
+            <span className="text-xs mt-1">Configurações</span>
           </button>
         </div>
       </nav>

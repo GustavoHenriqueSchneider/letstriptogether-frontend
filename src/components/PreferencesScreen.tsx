@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
+import { preferenceLabels } from '@/utils/preferenceLabels';
 import { 
   Building2,
   Building,
@@ -25,12 +26,25 @@ import {
   ShoppingBag,
   CircleDot,
   Mountain,
-  Waves
+  Waves,
+  MapPin,
+  Palette
 } from 'lucide-react';
 import { Header } from './Header';
+import apiClient from '@/services/api/client';
+import { useModalStore } from '@/store/modalStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface PreferencesScreenProps {
   onNavigate: (screen: string) => void;
+}
+
+interface UserPreferences {
+  likesShopping?: boolean;
+  likesGastronomy?: boolean;
+  culture?: string[];
+  entertainment?: string[];
+  placeTypes?: string[];
 }
 
 export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
@@ -53,7 +67,7 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
     'entertainment.tour': false,
     
     // Gastronomia
-    'food.restaurant': false,
+    'gastronomy': false,
     
     // Tipo de local
     'placetype.beach': false,
@@ -69,6 +83,94 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
     // Shopping
     'shopping': false
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const { openModal, closeModal, showError, showSuccess } = useModalStore();
+
+  // Usar hook do Zustand para reagir a mudanças no isInitialized
+  const isInitialized = useAuthStore((state) => state.isInitialized);
+
+  // Carregar preferências ao montar o componente
+  // Aguardar inicialização do authStore antes de fazer chamadas
+  useEffect(() => {
+    console.log('[PreferencesScreen] useEffect - isInitialized:', isInitialized);
+    if (isInitialized) {
+      console.log('[PreferencesScreen] Initialized, calling loadUserPreferences...');
+      loadUserPreferences();
+    } else {
+      console.log('[PreferencesScreen] Not initialized yet, waiting...');
+    }
+  }, [isInitialized]);
+
+  const loadUserPreferences = async () => {
+    console.log('[PreferencesScreen] loadUserPreferences() - Starting');
+    setIsLoading(true);
+    openModal('loading');
+    
+    try {
+      console.log('[PreferencesScreen] loadUserPreferences() - Calling API /users/me...');
+      const response = await apiClient.get<{ 
+        name: string; 
+        email: string; 
+        preferences: UserPreferences | null;
+      }>('/users/me');
+      console.log('[PreferencesScreen] loadUserPreferences() - API success, has preferences:', !!response.data.preferences);
+      
+      if (response.data.preferences) {
+        const prefs = response.data.preferences;
+        const newPrefs: typeof travelPrefs = { ...travelPrefs };
+        
+        // Marcar preferência de Restaurant (boolean)
+        if (prefs.likesGastronomy) {
+          newPrefs.gastronomy = true;
+        }
+        
+        // Marcar preferências de Culture
+        if (prefs.culture && Array.isArray(prefs.culture)) {
+          prefs.culture.forEach((culture: string) => {
+            const key = culture.toLowerCase().startsWith('culture.') ? culture.toLowerCase() : `culture.${culture.toLowerCase()}`;
+            if (key in newPrefs) {
+              (newPrefs as any)[key] = true;
+            }
+          });
+        }
+        
+        // Marcar preferências de Entertainment
+        if (prefs.entertainment && Array.isArray(prefs.entertainment)) {
+          prefs.entertainment.forEach((entertainment: string) => {
+            const key = entertainment.toLowerCase().startsWith('entertainment.') ? entertainment.toLowerCase() : `entertainment.${entertainment.toLowerCase()}`;
+            if (key in newPrefs) {
+              (newPrefs as any)[key] = true;
+            }
+          });
+        }
+        
+        // Marcar preferências de PlaceTypes
+        if (prefs.placeTypes && Array.isArray(prefs.placeTypes)) {
+          prefs.placeTypes.forEach((placeType: string) => {
+            const key = placeType.toLowerCase().startsWith('placetype.') ? placeType.toLowerCase() : `placetype.${placeType.toLowerCase()}`;
+            if (key in newPrefs) {
+              (newPrefs as any)[key] = true;
+            }
+          });
+        }
+        
+        // Marcar shopping se likesShopping for true
+        if (prefs.likesShopping) {
+          newPrefs.shopping = true;
+        }
+        
+        setTravelPrefs(newPrefs);
+      }
+    } catch (error: any) {
+      console.error('[PreferencesScreen] loadUserPreferences() - API error:', error);
+      console.error('[PreferencesScreen] loadUserPreferences() - Error response:', error.response);
+      showError('Erro ao carregar preferências', error.response?.data?.message || 'Não foi possível carregar suas preferências');
+    } finally {
+      setIsLoading(false);
+      closeModal('loading');
+      console.log('[PreferencesScreen] loadUserPreferences() - Finished');
+    }
+  };
 
   const toggleTravelPref = (key: string) => {
     setTravelPrefs(prev => ({
@@ -80,104 +182,227 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
   const categoryGroups = [
     {
       title: 'Cultura',
+      icon: Landmark,
       categories: [
-        { key: 'culture.architecture', label: 'Arquitetura', icon: Building2 },
-        { key: 'culture.center', label: 'Centro Cultural', icon: Building },
-        { key: 'culture.education', label: 'Educação', icon: GraduationCap },
-        { key: 'culture.heritage', label: 'Patrimônio', icon: Crown },
-        { key: 'culture.historical', label: 'Histórico', icon: Landmark },
-        { key: 'culture.monument', label: 'Monumento', icon: Castle },
-        { key: 'culture.museum', label: 'Museu', icon: LibraryBig },
-        { key: 'culture.religious', label: 'Religioso', icon: Church }
+        { key: 'culture.architecture', label: preferenceLabels['culture.architecture'], icon: Building2 },
+        { key: 'culture.center', label: preferenceLabels['culture.center'], icon: Building },
+        { key: 'culture.education', label: preferenceLabels['culture.education'], icon: GraduationCap },
+        { key: 'culture.heritage', label: preferenceLabels['culture.heritage'], icon: Crown },
+        { key: 'culture.historical', label: preferenceLabels['culture.historical'], icon: Landmark },
+        { key: 'culture.monument', label: preferenceLabels['culture.monument'], icon: Castle },
+        { key: 'culture.museum', label: preferenceLabels['culture.museum'], icon: LibraryBig },
+        { key: 'culture.religious', label: preferenceLabels['culture.religious'], icon: Church }
       ]
     },
     {
       title: 'Entretenimento',
+      icon: Ticket,
       categories: [
-        { key: 'entertainment.adventure', label: 'Aventura', icon: Compass },
-        { key: 'entertainment.attraction', label: 'Atrações', icon: Ticket },
-        { key: 'entertainment.park', label: 'Parque', icon: Trees },
-        { key: 'entertainment.sports', label: 'Esportes', icon: Trophy },
-        { key: 'entertainment.tour', label: 'Tour', icon: Map }
+        { key: 'entertainment.adventure', label: preferenceLabels['entertainment.adventure'], icon: Compass },
+        { key: 'entertainment.attraction', label: preferenceLabels['entertainment.attraction'], icon: Ticket },
+        { key: 'entertainment.park', label: preferenceLabels['entertainment.park'], icon: Trees },
+        { key: 'entertainment.sports', label: preferenceLabels['entertainment.sports'], icon: Trophy },
+        { key: 'entertainment.tour', label: preferenceLabels['entertainment.tour'], icon: Map }
       ]
     },
     {
-      title: 'Gastronomia',
+      title: 'Tipo de local',
+      icon: MapPin,
       categories: [
-        { key: 'food.restaurant', label: 'Restaurante', icon: UtensilsCrossed }
+        { key: 'placetype.beach', label: preferenceLabels['placetype.beach'], icon: Waves },
+        { key: 'placetype.cave', label: preferenceLabels['placetype.cave'], icon: CircleDot },
+        { key: 'placetype.mountain', label: preferenceLabels['placetype.mountain'], icon: Mountain },
+        { key: 'placetype.nature', label: preferenceLabels['placetype.nature'], icon: Leaf },
+        { key: 'placetype.park', label: preferenceLabels['placetype.park'], icon: TreePine },
+        { key: 'placetype.rural', label: preferenceLabels['placetype.rural'], icon: Home },
+        { key: 'placetype.trail', label: preferenceLabels['placetype.trail'], icon: Route },
+        { key: 'placetype.viewpoint', label: preferenceLabels['placetype.viewpoint'], icon: Eye },
+        { key: 'placetype.waterfall', label: preferenceLabels['placetype.waterfall'], icon: Droplets }
       ]
     },
     {
-      title: 'Tipo de Local',
+      title: 'Outros',
+      icon: Palette,
       categories: [
-        { key: 'placetype.beach', label: 'Praia', icon: Waves },
-        { key: 'placetype.cave', label: 'Caverna', icon: CircleDot },
-        { key: 'placetype.mountain', label: 'Montanha', icon: Mountain },
-        { key: 'placetype.nature', label: 'Natureza', icon: Leaf },
-        { key: 'placetype.park', label: 'Parque', icon: TreePine },
-        { key: 'placetype.rural', label: 'Rural', icon: Home },
-        { key: 'placetype.trail', label: 'Trilha', icon: Route },
-        { key: 'placetype.viewpoint', label: 'Mirante', icon: Eye },
-        { key: 'placetype.waterfall', label: 'Cachoeira', icon: Droplets }
-      ]
-    },
-    {
-      title: 'Compras',
-      categories: [
-        { key: 'shopping', label: 'Shopping', icon: ShoppingBag }
+        { key: 'gastronomy', label: preferenceLabels['gastronomy'], icon: UtensilsCrossed },
+        { key: 'shopping', label: preferenceLabels['shopping'], icon: ShoppingBag }
       ]
     }
   ];
 
-  const handleSavePreferences = () => {
-    // Aqui você salvaria as preferências no backend
-    alert('Preferências salvas com sucesso!');
+  const hasAnyPreferenceSelected = () => {
+    return Object.values(travelPrefs).some(value => value === true);
+  };
+
+  // Verificar se todas as categorias obrigatórias têm pelo menos uma opção selecionada
+  const areAllRequiredCategoriesSelected = () => {
+    // Categorias com múltiplas opções que são obrigatórias
+    const requiredCategories = [
+      {
+        title: 'Cultura',
+        keys: ['culture.architecture', 'culture.center', 'culture.education', 'culture.heritage', 'culture.historical', 'culture.monument', 'culture.museum', 'culture.religious']
+      },
+      {
+        title: 'Entretenimento',
+        keys: ['entertainment.adventure', 'entertainment.attraction', 'entertainment.park', 'entertainment.sports', 'entertainment.tour']
+      },
+      {
+        title: 'Tipo de Local',
+        keys: ['placetype.beach', 'placetype.cave', 'placetype.mountain', 'placetype.nature', 'placetype.park', 'placetype.rural', 'placetype.trail', 'placetype.viewpoint', 'placetype.waterfall']
+      }
+    ];
+
+    // Verificar se cada categoria obrigatória tem pelo menos uma opção selecionada
+    return requiredCategories.every(category => {
+      return category.keys.some(key => travelPrefs[key as keyof typeof travelPrefs] === true);
+    });
+  };
+
+  // Verificar se há preferências carregadas e se todas as categorias obrigatórias estão selecionadas
+  const hasLoadedPreferences = () => {
+    // Se ainda está carregando, não desabilitar
+    if (isLoading) return true;
+    // Verificar se todas as categorias obrigatórias têm pelo menos uma opção selecionada
+    return areAllRequiredCategoriesSelected();
+  };
+
+  // Verificar se uma categoria específica tem pelo menos uma opção selecionada
+  const hasCategorySelection = (categoryKeys: string[]) => {
+    return categoryKeys.some(key => travelPrefs[key as keyof typeof travelPrefs] === true);
+  };
+
+  const handleSavePreferences = async () => {
+    if (!areAllRequiredCategoriesSelected()) {
+      showError('Preferências incompletas', 'Por favor, selecione pelo menos uma opção em cada categoria (Cultura, Entretenimento e Tipo de Local)');
+      return;
+    }
+
+    openModal('loading');
+    
+    try {
+      // Preparar dados para enviar
+      const culture: string[] = [];
+      const entertainment: string[] = [];
+      const placeTypes: string[] = [];
+      let likesShopping = false;
+      let likesGastronomy = false;
+
+      Object.entries(travelPrefs).forEach(([key, value]) => {
+        if (value) {
+          if (key === 'gastronomy') {
+            likesGastronomy = true;
+          } else if (key.startsWith('culture.')) {
+            culture.push(key);
+          } else if (key.startsWith('entertainment.')) {
+            entertainment.push(key);
+          } else if (key.startsWith('placetype.')) {
+            placeTypes.push(key);
+          } else if (key === 'shopping') {
+            likesShopping = true;
+          }
+        }
+      });
+
+      await apiClient.put('/users/me/preferences', {
+        likesShopping,
+        likesGastronomy,
+        culture,
+        entertainment,
+        placeTypes
+      });
+
+      closeModal('loading');
+      showSuccess('Preferências salvas', 'Suas preferências foram salvas com sucesso!');
+      onNavigate('profile');
+    } catch (error: any) {
+      closeModal('loading');
+      showError('Erro ao salvar preferências', error.response?.data?.message || 'Não foi possível salvar suas preferências');
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <Header 
-        title="Preferências de Viagem"
-        onBack={() => onNavigate('dashboard')}
+        title="Configurações"
+        onBack={() => onNavigate('profile')}
       />
 
-      <div className="p-4 space-y-6">
-        {/* Travel Categories */}
-        {categoryGroups.map(group => (
-          <Card key={group.title}>
-            <CardHeader>
-              <CardTitle className="text-[#01001D]">{group.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-3">
-                {group.categories.map(({ key, label, icon: Icon }) => (
-                  <button
-                    key={key}
-                    onClick={() => toggleTravelPref(key)}
-                    className={`p-3 rounded-lg border-2 transition-all ${
-                      travelPrefs[key]
-                        ? 'border-[#0E0652] bg-[#0E0652] text-white'
-                        : 'border-gray-200 bg-white text-gray-700 hover:border-[#6496D8]'
-                    }`}
-                  >
-                    <Icon className="h-5 w-5 mx-auto mb-1" />
-                    <span className="text-sm font-medium">{label}</span>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
+        {isLoading ? (
+          <div className="text-center py-8">
+            <p className="text-gray-600">Carregando preferências...</p>
+          </div>
+        ) : (
+          <>
+            {/* Preferências de Viagem Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-[#01001D]">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  Preferências de viagem
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Travel Categories */}
+                {categoryGroups.map(group => {
+                  const GroupIcon = group.icon;
+                  // Verificar se esta categoria é obrigatória e se tem seleção
+                  const categoryKeys = group.categories.map(cat => cat.key);
+                  // Categorias obrigatórias: Cultura, Entretenimento e Tipo de Local
+                  // Categoria "Outros" não é obrigatória
+                  const isRequired = group.categories.length > 1 && 
+                    group.title !== 'Outros';
+                  const hasSelection = hasCategorySelection(categoryKeys);
+                  const showError = isRequired && !hasSelection && !isLoading;
+                  
+                  return (
+                    <Card key={group.title} className={showError ? 'border-2 border-red-500' : ''}>
+                      <CardHeader>
+                        <CardTitle className="flex items-center text-[#01001D]">
+                          <GroupIcon className="h-5 w-5 mr-2" />
+                          {group.title}
+                        </CardTitle>
+                        {showError && (
+                          <p className="text-sm text-red-500 mt-1">Selecione pelo menos uma opção:</p>
+                        )}
+                      </CardHeader>
+                      <CardContent>
+                        <div className={`grid gap-3 ${group.categories.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                          {group.categories.map(({ key, label, icon: Icon }) => (
+                            <button
+                              key={key}
+                              onClick={() => toggleTravelPref(key)}
+                              className={`p-3 rounded-lg border-2 transition-all flex flex-col items-center justify-center ${
+                                travelPrefs[key]
+                                  ? 'border-[#0E0652] bg-[#0E0652] text-white'
+                                  : 'border-gray-200 bg-white text-gray-700 hover:border-[#6496D8]'
+                              }`}
+                            >
+                              <Icon className="h-5 w-5 mb-1" />
+                              <span className="text-sm font-medium">{label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
 
-        <div className="flex justify-center pb-6">
-          <Button 
-            onClick={handleSavePreferences}
-            className="bg-[#0E0652] hover:bg-[#130F61] text-white px-8"
-          >
-            Salvar Preferências
-          </Button>
-        </div>
+                {/* Botão Salvar */}
+                <div className="pt-4">
+                  <Button 
+                    onClick={handleSavePreferences}
+                    className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                    disabled={!hasLoadedPreferences()}
+                  >
+                    Salvar preferências
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </div>
   );

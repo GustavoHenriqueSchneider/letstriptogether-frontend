@@ -1,50 +1,169 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
-import { Eye, EyeOff, ArrowLeft, Mail, Lock, User } from 'lucide-react';
-import { Header } from './Header';
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, X, Check } from 'lucide-react';
 import backgroundImage from 'figma:asset/9461ca4209b21dd0f47647fbada0c1c80b8c5f4a.png';
+import { authApi } from '@/services/api/auth';
+import { useAuthStore } from '@/store/authStore';
+import { useModalStore } from '@/store/modalStore';
 
 interface AuthScreensProps {
   onNavigate: (screen: string) => void;
+  onLogin?: (email: string, password: string) => Promise<void>;
 }
 
-export function LoginScreen({ onNavigate }: AuthScreensProps) {
+// Função para validar email
+const isValidEmail = (email: string): boolean => {
+  if (!email) return false;
+  if (email.length > 254) return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Função para validar nome
+const isValidName = (name: string): boolean => {
+  if (!name) return false;
+  if (name.length > 150) return false;
+  return name.trim().length > 0;
+};
+
+// Interface para critérios de senha
+interface PasswordCriteria {
+  hasMinLength: boolean;
+  hasMaxLength: boolean;
+  hasLowercase: boolean;
+  hasUppercase: boolean;
+  hasNumber: boolean;
+  hasSpecialChar: boolean;
+}
+
+// Função para validar senha e retornar critérios
+const validatePassword = (password: string): PasswordCriteria => {
+  return {
+    hasMinLength: password.length >= 8,
+    hasMaxLength: password.length <= 30,
+    hasLowercase: /[a-z]/.test(password),
+    hasUppercase: /[A-Z]/.test(password),
+    hasNumber: /[0-9]/.test(password),
+    hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password),
+  };
+};
+
+// Função para verificar se a senha é válida (todos os critérios atendidos)
+const isPasswordValid = (criteria: PasswordCriteria): boolean => {
+  return Object.values(criteria).every(criterion => criterion === true);
+};
+
+// Componente para exibir critérios de senha
+const PasswordCriteriaList = ({ criteria, show }: { criteria: PasswordCriteria; show: boolean }) => {
+  if (!show) return null;
+
+  const criteriaList = [
+    { key: 'hasMinLength', label: 'Mínimo 8 caracteres' },
+    { key: 'hasMaxLength', label: 'Máximo 30 caracteres' },
+    { key: 'hasLowercase', label: 'Uma letra minúscula' },
+    { key: 'hasUppercase', label: 'Uma letra maiúscula' },
+    { key: 'hasNumber', label: 'Um número' },
+    { key: 'hasSpecialChar', label: 'Um caractere especial' },
+  ];
+
+  return (
+    <div className="mt-2 space-y-1">
+      <p className="text-xs text-gray-600 mb-2">Critérios da senha:</p>
+      <div className="grid grid-cols-1 gap-1">
+        {criteriaList.map(({ key, label }) => {
+          const isValid = criteria[key as keyof PasswordCriteria];
+          return (
+            <div key={key} className="flex items-center gap-2 text-xs">
+              {isValid ? (
+                <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
+              ) : (
+                <div className="h-3 w-3 rounded-full border border-gray-300 flex-shrink-0" />
+              )}
+              <span className={isValid ? 'text-green-600' : 'text-gray-500'}>
+                {label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export function LoginScreen({ onNavigate, onLogin }: AuthScreensProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const { showError } = useModalStore();
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Pré-carregar a imagem de fundo ANTES de renderizar
+  useEffect(() => {
+    // Verificar se a imagem já está em cache
+    const img = new Image();
+    img.onload = () => {
+      setImageLoaded(true);
+    };
+    img.onerror = () => {
+      // Se a imagem falhar ao carregar, ainda mostra o conteúdo
+      setImageLoaded(true);
+    };
+    // Definir src depois de configurar os handlers para garantir que o evento seja capturado
+    img.src = backgroundImage;
+    
+    // Se a imagem já estiver em cache, o onload pode não disparar
+    if (img.complete) {
+      setImageLoaded(true);
+    }
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    onNavigate('dashboard');
+    
+    if (onLogin) {
+      setIsLoading(true);
+      try {
+        await onLogin(formData.email, formData.password);
+      } catch (error: any) {
+        // Erro já foi tratado no LoginPage
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      onNavigate('dashboard');
+    }
   };
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
       {/* Background Image with Blur */}
       <div 
-        className="absolute inset-0 bg-cover bg-center blur-sm"
+        className={`absolute inset-0 bg-cover bg-center blur-sm transition-opacity duration-500 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
         style={{
           backgroundImage: `url(${backgroundImage})`
         }}
       />
-      {/* Dark Overlay with Gradient */}
+      {/* Dark Overlay with Gradient - sempre visível */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#0E0652]/90 via-[#130F61]/85 to-[#002F76]/90" />
       
       {/* Content */}
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Let's Trip Together</h1>
-          <p className="text-gray-300 mt-4">Encontre destinos perfeitos com seus amigos</p>
+          <p className="text-gray-300 mt-4">Encontre destinos perfeitos com seus amigos.</p>
         </div>
 
         <Card className="shadow-2xl border-0">
           <CardHeader>
-            <CardTitle className="text-center text-[#01001D]">Entrar</CardTitle>
             <CardDescription className="text-center">
-              Acesse sua conta e comece a planejar
+              Acesse sua conta e comece a planejar!
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -57,16 +176,31 @@ export function LoginScreen({ onNavigate }: AuthScreensProps) {
                     id="email"
                     type="email"
                     placeholder="seu@email.com"
-                    className="pl-10"
+                    className={`pl-10 pr-10 ${
+                      emailValid === false ? 'border-red-500 focus-visible:border-red-500' : ''
+                    }`}
                     value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    required
-                  />
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({...formData, email: value});
+                      if (value.length > 0) {
+                        setEmailValid(isValidEmail(value));
+                      } else {
+                        setEmailValid(null);
+                      }
+                      }}
+                      required
+                      maxLength={254}
+                      disabled={isLoading}
+                    />
+                    {emailValid === false && (
+                      <X className="absolute right-3 top-3 h-4 w-4 text-red-500" />
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Senha</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -77,11 +211,13 @@ export function LoginScreen({ onNavigate }: AuthScreensProps) {
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     required
+                    disabled={isLoading}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-3 top-3"
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                   </button>
@@ -91,8 +227,9 @@ export function LoginScreen({ onNavigate }: AuthScreensProps) {
               <Button 
                 type="submit" 
                 className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                disabled={isLoading || !emailValid || !formData.password}
               >
-                Entrar
+                {isLoading ? 'Entrando...' : 'Entrar'}
               </Button>
             </form>
 
@@ -100,6 +237,7 @@ export function LoginScreen({ onNavigate }: AuthScreensProps) {
               <button 
                 onClick={() => onNavigate('reset-password')}
                 className="text-sm text-[#6496D8] hover:underline"
+                disabled={isLoading}
               >
                 Esqueceu sua senha?
               </button>
@@ -111,6 +249,7 @@ export function LoginScreen({ onNavigate }: AuthScreensProps) {
               variant="outline" 
               className="w-full border-[#6496D8] text-[#6496D8] hover:bg-[#6496D8] hover:text-white"
               onClick={() => onNavigate('register')}
+              disabled={isLoading}
             >
               Criar conta
             </Button>
@@ -125,62 +264,257 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [emailInUse, setEmailInUse] = useState(false);
+  const [nameValid, setNameValid] = useState<boolean | null>(null);
+  const [passwordCriteria, setPasswordCriteria] = useState<PasswordCriteria>({
+    hasMinLength: false,
+    hasMaxLength: true,
+    hasLowercase: false,
+    hasUppercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
   const [verificationCode, setVerificationCode] = useState('');
-  const [sentCode, setSentCode] = useState('123456'); // Simular código enviado
+  const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
+  const [emailToken, setEmailToken] = useState<string | null>(null); // Token da etapa 1
+  const [registerToken, setRegisterToken] = useState<string | null>(null); // Token da etapa 2
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    termsAccepted: false
   });
+  const { showError, showSuccess, openModal, closeModal } = useModalStore();
+  const { login } = useAuthStore();
 
-  const handleStep1Submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simular envio do código
-    setSentCode('123456');
-    setCurrentStep(2);
-  };
+  // Pré-carregar a imagem de fundo
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setImageLoaded(true);
+    };
+    img.onerror = () => {
+      setImageLoaded(true);
+    };
+    img.src = backgroundImage;
+    
+    if (img.complete) {
+      setImageLoaded(true);
+    }
+  }, []);
 
-  const handleStep2Submit = (e: React.FormEvent) => {
+  // Timer de cooldown para reenvio de código
+  useEffect(() => {
+    if (resendCooldownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setResendCooldownSeconds(resendCooldownSeconds - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldownSeconds]);
+
+  // Zerar cronômetro de reenvio quando voltar para o step 1
+  useEffect(() => {
+    if (currentStep === 1) {
+      setResendCooldownSeconds(0);
+    }
+  }, [currentStep]);
+
+  // Etapa 1: Enviar email de confirmação
+  const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (verificationCode === sentCode) {
-      setCurrentStep(3);
-    } else {
-      alert('Código de verificação incorreto!');
+    setIsLoading(true);
+    openModal('loading');
+
+    try {
+      const token = await authApi.sendRegisterConfirmationEmail(formData.name, formData.email);
+      closeModal('loading');
+      setEmailInUse(false);
+      setEmailToken(token);
+      setCurrentStep(2);
+    } catch (error: any) {
+      closeModal('loading');
+      if (error.response?.status === 409) {
+        setEmailInUse(true);
+      } else {
+        showError('Erro ao enviar código', 'Não foi possível enviar o código de verificação!');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleStep3Submit = (e: React.FormEvent) => {
+  // Etapa 2: Validar código de email
+  const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      alert('As senhas não coincidem!');
+    
+    if (!emailToken) {
+      showError('Erro', 'Token de email não encontrado. Por favor, volte e tente novamente.');
       return;
     }
-    onNavigate('dashboard');
+
+    const code = parseInt(verificationCode, 10);
+    if (isNaN(code) || verificationCode.length !== 6) {
+      showError('Código inválido', 'Digite um código de 6 dígitos');
+      return;
+    }
+
+    setIsLoading(true);
+    openModal('loading');
+
+    try {
+      const token = await authApi.validateRegisterConfirmationCode(code, emailToken);
+      closeModal('loading');
+      setRegisterToken(token);
+      setCurrentStep(3);
+    } catch (error: any) {
+      closeModal('loading');
+      showError('Código inválido', 'O código informado está incorreto!');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Etapa 3: Completar registro
+  const handleStep3Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!registerToken) {
+      showError('Erro', 'Token de registro não encontrado. Por favor, volte e tente novamente.');
+      return;
+    }
+
+    if (!isPasswordValid(passwordCriteria)) {
+      showError('Senha inválida', 'A senha deve atender a todos os critérios!');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      showError('Senhas não coincidem', 'As senhas informadas não são iguais');
+      return;
+    }
+
+    if (!formData.termsAccepted) {
+      showError('Termos não aceitos', 'Você precisa aceitar os termos de uso para continuar');
+      return;
+    }
+
+    setIsLoading(true);
+    openModal('loading');
+
+    try {
+      await authApi.completeRegister(formData.password, formData.termsAccepted, registerToken);
+      
+      // Fazer login automático após criar a conta
+      try {
+        const loginResponse = await authApi.login(formData.email, formData.password);
+        await login(
+          loginResponse.user,
+          loginResponse.accessToken,
+          loginResponse.sessionId,
+          loginResponse.refreshToken,
+          true // Salvar refreshToken em cookie
+        );
+        closeModal('loading');
+        
+        // O interceptor já verifica preferences e redireciona automaticamente
+        // Se não redirecionou, navegar para dashboard
+        setTimeout(() => {
+          if (!window.location.pathname.includes('/preferences')) {
+            onNavigate('dashboard');
+          }
+        }, 2150);
+      } catch (loginError: any) {
+        closeModal('loading');
+        // Se o login falhar, redirecionar para login mesmo assim
+        showError('Conta criada', 'Conta criada com sucesso, mas houve um erro ao fazer login automático. Por favor, faça login manualmente.');
+        setTimeout(() => {
+          onNavigate('login');
+        }, 3000);
+      }
+    } catch (error: any) {
+      closeModal('loading');
+      showError('Erro ao criar conta', 'Não foi possível completar o registro');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    if (resendCooldownSeconds > 0) {
+      return;
+    }
+
+    if (!formData.email || !formData.name) {
+      showError('Erro', 'Nome e e-mail são obrigatórios');
+      return;
+    }
+
+    setIsLoading(true);
+    openModal('loading');
+    try {
+      const token = await authApi.sendRegisterConfirmationEmail(formData.name, formData.email);
+      closeModal('loading');
+      setEmailToken(token);
+      setResendCooldownSeconds(60);
+      showSuccess('Código reenviado', 'Verifique seu e-mail novamente!');
+    } catch (error: any) {
+      closeModal('loading');
+      if (error.response?.status === 409) {
+        setEmailInUse(true);
+      } else {
+        showError('Erro ao reenviar código', 'Não foi possível reenviar o código');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0E0652] via-[#130F61] to-[#002F76] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-6">
-          <button 
-            onClick={() => currentStep > 1 ? setCurrentStep(currentStep - 1) : onNavigate('login')}
-            className="flex items-center text-white hover:text-[#6496D8] mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </button>
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {currentStep === 1 && 'Criar Conta'}
-              {currentStep === 2 && 'Verificar E-mail'}
-              {currentStep === 3 && 'Definir Senha'}
-            </h1>
-            <p className="text-gray-300">
-              {currentStep === 1 && 'Junte-se à comunidade de viajantes'}
-              {currentStep === 2 && 'Digite o código enviado para seu e-mail'}
-              {currentStep === 3 && 'Crie uma senha segura para sua conta'}
-            </p>
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Background Image with Blur */}
+      <div 
+        className={`absolute inset-0 bg-cover bg-center blur-sm transition-opacity duration-500 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          backgroundImage: `url(${backgroundImage})`
+        }}
+      />
+      {/* Dark Overlay with Gradient - sempre visível */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0E0652]/90 via-[#130F61]/85 to-[#002F76]/90" />
+      
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Let's Trip Together</h1>
+          <p className="text-gray-300 mt-4">Encontre destinos perfeitos com seus amigos.</p>
+        </div>
+
+        <Card className="shadow-2xl border-0">
+          <CardHeader className="relative">
+            <button 
+              onClick={() => {
+                if (currentStep === 3) {
+                  setCurrentStep(1);
+                }
+                else if (currentStep > 1) {
+                  setCurrentStep(currentStep - 1);
+                  setVerificationCode('');
+                } else {
+                  onNavigate('login');
+                }
+              }}
+              className="absolute left-0 top-0 p-6 text-[#01001D] hover:text-[#6496D8]"
+              disabled={isLoading}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <CardTitle className="text-center text-[#01001D]">Criar sua conta</CardTitle>
+            <CardDescription className="text-center">Junte-se à comunidade de viajantes!</CardDescription>
             <div className="flex justify-center mt-4 space-x-2">
               {[1, 2, 3].map((step) => (
                 <div
@@ -191,10 +525,7 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                 />
               ))}
             </div>
-          </div>
-        </div>
-
-        <Card className="shadow-2xl border-0">
+          </CardHeader>
           <CardContent className="p-6">
             {/* Step 1: Nome e Email */}
             {currentStep === 1 && (
@@ -207,11 +538,26 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                       id="name"
                       type="text"
                       placeholder="Seu nome"
-                      className="pl-10"
+                      className={`pl-10 pr-10 ${
+                        nameValid === false ? 'border-red-500 focus-visible:border-red-500' : ''
+                      }`}
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData({...formData, name: value});
+                        if (value.length > 0) {
+                          setNameValid(isValidName(value));
+                        } else {
+                          setNameValid(null);
+                        }
+                      }}
                       required
+                      maxLength={150}
+                      disabled={isLoading}
                     />
+                    {nameValid === false && (
+                      <X className="absolute right-3 top-3 h-4 w-4 text-red-500" />
+                    )}
                   </div>
                 </div>
 
@@ -223,19 +569,42 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                       id="email"
                       type="email"
                       placeholder="seu@email.com"
-                      className="pl-10"
+                      className={`pl-10 pr-10 ${
+                        emailValid === false || emailInUse ? 'border-red-500 focus-visible:border-red-500' : ''
+                      }`}
                       value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData({...formData, email: value});
+                        setEmailInUse(false); // Limpar erro quando usuário alterar o email
+                        if (value.length > 0) {
+                          setEmailValid(isValidEmail(value));
+                        } else {
+                          setEmailValid(null);
+                        }
+                      }}
                       required
+                      maxLength={254}
+                      disabled={isLoading}
                     />
+                    {(emailValid === false || emailInUse) && (
+                      <X className="absolute right-3 top-3 h-4 w-4 text-red-500" />
+                    )}
                   </div>
+                  {emailInUse && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <X className="h-3 w-3 flex-shrink-0" />
+                      Este e-mail já está em uso.
+                    </p>
+                  )}
                 </div>
 
                 <Button 
                   type="submit" 
                   className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                  disabled={isLoading || !emailValid || !nameValid || emailInUse}
                 >
-                  Continuar
+                  {isLoading ? 'Enviando...' : 'Continuar'}
                 </Button>
               </form>
             )}
@@ -260,29 +629,30 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                     placeholder="Digite o código de 6 dígitos"
                     className="text-center text-lg tracking-widest"
                     value={verificationCode}
-                    onChange={(e) => setVerificationCode(e.target.value)}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     maxLength={6}
                     required
+                    disabled={isLoading}
                   />
-                  <p className="text-xs text-gray-500 text-center">
-                    Código para demonstração: 123456
-                  </p>
                 </div>
 
                 <Button 
                   type="submit" 
                   className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
-                >
-                  Verificar
-                </Button>
+                  disabled={isLoading || verificationCode.length !== 6}
+                >Verificar</Button>
 
-                <button
+                <Button
                   type="button"
-                  className="text-sm text-[#6496D8] hover:underline w-full text-center"
-                  onClick={() => alert('Código reenviado!')}
+                  variant="outline"
+                  className="w-full border-[#6496D8] text-[#6496D8] hover:bg-[#6496D8] hover:text-white"
+                  onClick={handleResendCode}
+                  disabled={isLoading || resendCooldownSeconds > 0}
                 >
-                  Não recebeu? Reenviar código
-                </button>
+                  {resendCooldownSeconds > 0 
+                      ? `Aguarde ${resendCooldownSeconds}s para reenviar` 
+                      : 'Não recebeu? Reenviar código'}
+                </Button>
               </form>
             )}
 
@@ -296,21 +666,29 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                     <Input
                       id="password"
                       type={showPassword ? "text" : "password"}
-                      placeholder="Mínimo 6 caracteres"
+                      placeholder="Digite sua senha"
                       className="pl-10 pr-10"
                       value={formData.password}
-                      onChange={(e) => setFormData({...formData, password: e.target.value})}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData({...formData, password: value});
+                        setPasswordCriteria(validatePassword(value));
+                      }}
                       required
-                      minLength={6}
+                      minLength={8}
+                      maxLength={30}
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-3"
+                      disabled={isLoading}
                     >
                       {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                     </button>
                   </div>
+                  <PasswordCriteriaList criteria={passwordCriteria} show={formData.password.length > 0} />
                 </div>
 
                 <div className="space-y-2">
@@ -321,31 +699,70 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Repita sua senha"
-                      className="pl-10 pr-10"
+                      className={`pl-10 pr-10 ${
+                        formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword 
+                          ? 'border-red-500 focus-visible:border-red-500' 
+                          : ''
+                      }`}
                       value={formData.confirmPassword}
-                      onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData({...formData, confirmPassword: value});
+                      }}
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute right-3 top-3"
+                      disabled={isLoading}
                     >
                       {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
                     </button>
                   </div>
+                  {formData.confirmPassword.length > 0 && formData.password !== formData.confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <X className="h-3 w-3 flex-shrink-0" />
+                      A senha informada deve ser equivalente à anterior.
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    checked={formData.termsAccepted}
+                    onChange={(e) => setFormData({...formData, termsAccepted: e.target.checked})}
+                    className="rounded border-gray-300"
+                    required
+                    disabled={isLoading}
+                  />
+                    <Label htmlFor="terms" className="text-sm">
+                      Aceito os
+                      <a 
+                        href="/terms-of-use"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#6496D8] hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open('/terms-of-use', '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        Termos de Uso
+                      </a>.
+                    </Label>
                 </div>
 
                 <Button 
                   type="submit" 
                   className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                  disabled={isLoading || !formData.termsAccepted || !isPasswordValid(passwordCriteria) || formData.password !== formData.confirmPassword}
                 >
-                  Criar conta
+                  {isLoading ? 'Criando conta...' : 'Criar conta'}
                 </Button>
-
-                <p className="text-xs text-gray-500 text-center">
-                  Ao criar uma conta, você concorda com nossos Termos de Uso e Política de Privacidade
-                </p>
               </form>
             )}
           </CardContent>
@@ -355,88 +772,337 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
   );
 }
 
-export function ResetPasswordScreen({ onNavigate }: AuthScreensProps) {
-  const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+interface ResetPasswordScreenProps extends AuthScreensProps {
+  initialToken?: string | null;
+}
 
-  const handleReset = (e: React.FormEvent) => {
+export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordScreenProps) {
+  const [email, setEmail] = useState('');
+  const [resetToken, setResetToken] = useState<string | null>(initialToken || null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [passwordCriteria, setPasswordCriteria] = useState<PasswordCriteria>({
+    hasMinLength: false,
+    hasMaxLength: true,
+    hasLowercase: false,
+    hasUppercase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const { showError, showSuccess, showInfo, openModal, closeModal } = useModalStore();
+
+  // Atualizar resetToken quando initialToken mudar
+  useEffect(() => {
+    setResetToken(initialToken || null);
+  }, [initialToken]);
+
+  // Pré-carregar a imagem de fundo
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      setImageLoaded(true);
+    };
+    img.onerror = () => {
+      setImageLoaded(true);
+    };
+    img.src = backgroundImage;
+    
+    if (img.complete) {
+      setImageLoaded(true);
+    }
+  }, []);
+
+  // Timer de cooldown para reenvio de email
+  useEffect(() => {
+    if (cooldownSeconds > 0) {
+      const timer = setTimeout(() => {
+        setCooldownSeconds(cooldownSeconds - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldownSeconds]);
+
+  // Etapa 1: Solicitar reset de senha (sem token na URL)
+  const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSent(true);
+    
+    if (cooldownSeconds > 0) {
+      return;
+    }
+
+    setIsLoading(true);
+    openModal('loading');
+
+    try {
+      await authApi.requestResetPassword(email);
+      closeModal('loading');
+      // Mostrar popup informativo
+      showInfo(
+        'E-mail enviado',
+        'Caso o e-mail informado exista em nossa base, você receberá instruções para recuperação de senha.'
+      );
+      // Iniciar timer de 60 segundos
+      setCooldownSeconds(60);
+    } catch (error: any) {
+      closeModal('loading');
+      showError('Erro ao solicitar reset', 'Não foi possível enviar o e-mail de recuperação!');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0E0652] via-[#130F61] to-[#002F76] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-6">
-          <button 
-            onClick={() => onNavigate('login')}
-            className="flex items-center text-white hover:text-[#6496D8] mb-4"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </button>
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {sent ? 'E-mail Enviado!' : 'Recuperar Senha'}
-            </h1>
-            <p className="text-gray-300">
-              {sent 
-                ? 'Verifique sua caixa de entrada e spam'
-                : 'Informe seu e-mail para receber as instruções'
-              }
-            </p>
+  // Etapa 2: Redefinir senha (com token na URL)
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!resetToken) {
+      showError('Token inválido', 'O token de recuperação não foi encontrado. Por favor, solicite um novo e-mail de recuperação.');
+      return;
+    }
+
+    if (!isPasswordValid(passwordCriteria)) {
+      showError('Senha inválida', 'A senha deve atender a todos os critérios!');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showError('Senhas não coincidem', 'As senhas informadas não são iguais!');
+      return;
+    }
+
+    setIsLoading(true);
+    openModal('loading');
+
+    try {
+      await authApi.resetPassword(password, resetToken);
+      closeModal('loading');
+      showSuccess(
+        'Senha redefinida com sucesso',
+        'A senha foi alterada com sucesso. Você será redirecionado para realizar o login!',
+        () => {
+          onNavigate('login');
+        }
+      );
+    } catch (error: any) {
+      closeModal('loading');
+      showError(
+        'Não foi possível redefinir a senha',
+        error.response?.data?.message || 'Houve um erro ao tentar redefinir a senha, por favor tente novamente.',
+        () => {
+          onNavigate('login');
+        }
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Se tiver token na URL, mostrar formulário de nova senha
+  if (resetToken) {
+    return (
+      <div className="min-h-screen relative flex items-center justify-center p-4">
+        {/* Background Image with Blur */}
+        <div 
+          className={`absolute inset-0 bg-cover bg-center blur-sm transition-opacity duration-500 ${
+            imageLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+          style={{
+            backgroundImage: `url(${backgroundImage})`
+          }}
+        />
+        {/* Dark Overlay with Gradient - sempre visível */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0E0652]/90 via-[#130F61]/85 to-[#002F76]/90" />
+        
+        <div className="w-full max-w-md relative z-10">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2">Let's Trip Together</h1>
+            <p className="text-gray-300 mt-4">Encontre destinos perfeitos com seus amigos.</p>
           </div>
+
+          <Card className="shadow-2xl border-0">
+            <CardHeader className="relative">
+              <button 
+                onClick={() => onNavigate('login')}
+                className="absolute left-0 top-0 p-6 text-[#01001D] hover:text-[#6496D8]"
+                disabled={isLoading}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <CardTitle className="text-center text-[#01001D]">Redefina sua senha</CardTitle>
+              <CardDescription className="text-center">
+                Defina uma nova senha para sua conta!
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Nova senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Digite sua nova senha"
+                      className="pl-10 pr-10"
+                      value={password}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPassword(value);
+                        setPasswordCriteria(validatePassword(value));
+                      }}
+                      required
+                      minLength={8}
+                      maxLength={30}
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                    </button>
+                  </div>
+                  <PasswordCriteriaList criteria={passwordCriteria} show={password.length > 0} />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirmar senha</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirme sua senha"
+                      className={`pl-10 pr-10 ${
+                        confirmPassword.length > 0 && password !== confirmPassword 
+                          ? 'border-red-500 focus-visible:border-red-500' 
+                          : ''
+                      }`}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-3"
+                      disabled={isLoading}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4 text-gray-400" /> : <Eye className="h-4 w-4 text-gray-400" />}
+                    </button>
+                  </div>
+                  {confirmPassword.length > 0 && password !== confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
+                      <X className="h-3 w-3 flex-shrink-0" />
+                      A senha informada deve ser equivalente à anterior.
+                    </p>
+                  )}
+                </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                    disabled={isLoading || !isPasswordValid(passwordCriteria) || password !== confirmPassword}
+                  >
+                    {isLoading ? 'Redefinindo...' : 'Redefinir senha'}
+                  </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Sem token na URL, mostrar formulário de email
+  return (
+    <div className="min-h-screen relative flex items-center justify-center p-4">
+      {/* Background Image with Blur */}
+      <div 
+        className={`absolute inset-0 bg-cover bg-center blur-sm transition-opacity duration-500 ${
+          imageLoaded ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{
+          backgroundImage: `url(${backgroundImage})`
+        }}
+      />
+      {/* Dark Overlay with Gradient - sempre visível */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#0E0652]/90 via-[#130F61]/85 to-[#002F76]/90" />
+      
+      <div className="w-full max-w-md relative z-10">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Let's Trip Together</h1>
+          <p className="text-gray-300 mt-4">Encontre destinos perfeitos com seus amigos.</p>
         </div>
 
         <Card className="shadow-2xl border-0">
-          <CardContent className="p-6">
-            {!sent ? (
-              <form onSubmit={handleReset} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="pl-10"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+          <CardHeader className="relative">
+            <button 
+              onClick={() => onNavigate('login')}
+              className="absolute left-0 top-0 p-6 text-[#01001D] hover:text-[#6496D8]"
+              disabled={isLoading}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <CardTitle className="text-center text-[#01001D]">Recupere sua senha</CardTitle>
+            <CardDescription className="text-center">
+              Informe seu e-mail para receber as instruções!
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleRequestReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">E-mail</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    className={`pl-10 pr-10 ${
+                      emailValid === false ? 'border-red-500 focus-visible:border-red-500' : ''
+                    }`}
+                    value={email}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setEmail(value);
+                      if (value.length > 0) {
+                        setEmailValid(isValidEmail(value));
+                      } else {
+                        setEmailValid(null);
+                      }
+                      }}
                       required
+                      maxLength={254}
+                      disabled={isLoading || cooldownSeconds > 0}
                     />
+                    {emailValid === false && (
+                      <X className="absolute right-3 top-3 h-4 w-4 text-red-500" />
+                    )}
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
-                >
-                  Enviar instruções
-                </Button>
-              </form>
-            ) : (
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-                  <Mail className="w-8 h-8 text-green-600" />
-                </div>
-                <p className="text-gray-600">
-                  Enviamos um link de recuperação para <strong>{email}</strong>
-                </p>
-                <Button 
-                  onClick={() => onNavigate('login')}
-                  className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
-                >
-                  Voltar ao login
-                </Button>
-                <button
-                  onClick={() => setSent(false)}
-                  className="text-sm text-[#6496D8] hover:underline"
-                >
-                  Não recebeu? Tentar novamente
-                </button>
-              </div>
-            )}
+              <Button
+                type="submit" 
+                className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                disabled={isLoading || cooldownSeconds > 0 || !emailValid}
+              >
+                {isLoading 
+                  ? 'Enviando...' 
+                  : cooldownSeconds > 0 
+                    ? `Aguarde ${cooldownSeconds}s para reenviar` 
+                    : 'Enviar instruções'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </div>
