@@ -19,6 +19,7 @@ const ChangePasswordPage = lazy(() => import('@/pages/profile/ChangePasswordPage
 const GroupSettingsPage = lazy(() => import('@/pages/settings/GroupSettingsPage').then(m => ({ default: m.default })));
 const LandingPage = lazy(() => import('@/pages/LandingPage').then(m => ({ default: m.default })));
 const AboutUsPage = lazy(() => import('@/pages/about/AboutUsPage').then(m => ({ default: m.default })));
+const InvitationsPage = lazy(() => import('@/pages/InvitationsPage').then(m => ({ default: m.default })));
 
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -251,6 +252,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<LoadingFallback />}>
         <AboutUsPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/invitations',
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <InvitationsPage />
       </Suspense>
     ),
   },

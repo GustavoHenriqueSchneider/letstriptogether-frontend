@@ -1,20 +1,15 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Header } from './Header';
 import { 
-  ArrowLeft, 
   Bell, 
   Heart, 
   Users, 
   Star, 
-  Calendar,
-  MapPin,
-  Check,
-  X,
-  Filter,
-  MoreHorizontal
+  Check
 } from 'lucide-react';
 
 interface NotificationsScreenProps {
@@ -38,19 +33,23 @@ interface Notification {
   }>;
 }
 
+const formatDateTime = (timestamp: string) => {
+  if (!timestamp) return '';
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return timestamp;
+  }
+  return date.toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
-  const [filter, setFilter] = useState<'all' | 'unread' | 'invites'>('all');
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: 1,
-      type: 'match',
-      title: 'Match Encontrado! 🎉',
-      message: 'Seu grupo "Férias Europa 2024" encontrou um match perfeito: Santorini!',
-      time: '2 min',
-      read: false,
-      groupName: 'Férias Europa 2024'
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -101,89 +100,62 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
     }
   };
 
-  const filteredNotifications = notifications.filter(notif => {
-    if (filter === 'unread') return !notif.read;
-    if (filter === 'invites') return notif.type === 'invite';
-    return true;
-  });
-
   const unreadCount = notifications.filter(n => !n.read).length;
+  const sortedNotifications = useMemo(
+    () =>
+      [...notifications].sort(
+        (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+      ),
+    [notifications]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b p-4">
-        <div className="flex items-center justify-between">
-          <button 
-            onClick={() => onNavigate('dashboard')}
-            className="p-2 hover:bg-gray-100 rounded-full"
-          >
-            <ArrowLeft className="h-6 w-6 text-[#01001D]" />
-          </button>
-          
-          <div className="text-center flex-1 mx-4">
-            <h1 className="text-lg font-semibold text-[#01001D]">Notificações</h1>
-            {unreadCount > 0 && (
-              <p className="text-sm text-gray-600">{unreadCount} não lidas</p>
-            )}
+      <Header
+        title="Notificações"
+        subtitle="Notificações"
+        onBack={() => onNavigate('dashboard')}
+      />
+
+      <main className="p-6 pb-20 max-w-7xl mx-auto w-full">
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-[#01001D]">Suas notificações</h2>
+          <p className="text-gray-600">Fique por dentro dos convites, votos e novidades dos grupos.</p>
+        </div>
+
+        <div className="mb-8 bg-white border border-blue-100 rounded-2xl shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#0E0652]">Feed em tempo real</p>
+              <p className="text-xs text-gray-500">
+                Novas notificações aparecem automaticamente enquanto você está aqui.
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Este feed usa apenas um cache local deste dispositivo, então o histórico completo não fica salvo.
+              </p>
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* Filter Tabs */}
-      <div className="bg-white border-b">
-        <div className="flex px-4">
-          <button
-            onClick={() => setFilter('all')}
-            className={`flex-1 py-3 px-2 text-sm font-medium ${
-              filter === 'all'
-                ? 'text-[#0E0652] border-b-2 border-[#0E0652] bg-blue-50'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            Todas
-            <span className="ml-2 text-xs bg-gray-200 px-2 py-0.5 rounded-full">
-              {notifications.length}
-            </span>
-          </button>
-          <button
-            onClick={() => setFilter('unread')}
-            className={`flex-1 py-3 px-2 text-sm font-medium ${
-              filter === 'unread'
-                ? 'text-[#0E0652] border-b-2 border-[#0E0652] bg-blue-50'
-                : 'text-gray-600 hover:text-gray-800'
-            }`}
-          >
-            Não Lidas
-            {unreadCount > 0 && (
-              <span className="ml-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* Notifications List */}
-      <div className="p-4">
-        {filteredNotifications.length === 0 ? (
+        {sortedNotifications.length === 0 ? (
           <Card>
             <CardContent className="p-8 text-center">
               <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {filter === 'unread' ? 'Tudo em dia!' : 'Nenhuma notificação'}
+                Nenhuma notificação
               </h3>
               <p className="text-gray-600">
-                {filter === 'unread' 
-                  ? 'Você não tem notificações não lidas.'
-                  : 'Você receberá notificações aqui quando houver novidades.'
-                }
+                Assim que algo acontecer nos seus grupos, a notificação chega aqui automaticamente.
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {filteredNotifications.map((notification) => {
+          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+            {sortedNotifications.map((notification) => {
               const Icon = getIcon(notification.type);
               const iconColor = getIconColor(notification.type);
               const typeBadge = getTypeBadge(notification.type);
@@ -191,10 +163,7 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
               return (
                 <Card 
                   key={notification.id} 
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    !notification.read ? 'bg-blue-50 border-[#6496D8]' : ''
-                  }`}
-                  onClick={() => !notification.actionRequired && markAsRead(notification.id)}
+                  className="border border-gray-100 bg-white transition-all hover:shadow-md"
                 >
                   <CardContent className="p-4">
                     <div className="flex space-x-3">
@@ -223,9 +192,6 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
                             <Badge className={`text-xs ${typeBadge.color}`}>
                               {typeBadge.label}
                             </Badge>
-                            {!notification.read && (
-                              <div className="w-2 h-2 bg-[#0E0652] rounded-full" />
-                            )}
                           </div>
                         </div>
                         
@@ -234,18 +200,9 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
                         </p>
 
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3 text-xs text-gray-500">
-                            <span>{notification.time}</span>
-                            {notification.groupName && (
-                              <>
-                                <span>•</span>
-                                <span className="flex items-center">
-                                  <MapPin className="h-3 w-3 mr-1" />
-                                  {notification.groupName}
-                                </span>
-                              </>
-                            )}
-                          </div>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <span>{formatDateTime(notification.time)}</span>
+                        </div>
 
                           {notification.actionRequired && notification.actions && (
                             <div className="flex space-x-2">
@@ -278,33 +235,8 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
             })}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* Quick Actions */}
-      {unreadCount > 0 && (
-        <div className="fixed bottom-4 left-4 right-4">
-          <Card className="bg-[#0E0652] text-white border-0 shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">
-                  {unreadCount} notificaç{unreadCount > 1 ? 'ões' : 'ão'} não lida{unreadCount > 1 ? 's' : ''}
-                </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-white text-white hover:bg-white hover:text-[#0E0652]"
-                  onClick={() => {
-                    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-                  }}
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Marcar todas como lidas
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

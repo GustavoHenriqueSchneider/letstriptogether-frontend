@@ -129,7 +129,7 @@ export const membersApi = {
 
     // Construir o link usando a rota atual
     const baseUrl = window.location.origin;
-    const inviteLink = `${baseUrl}/invitation?token=${token}`;
+    const inviteLink = `${baseUrl}/invitations?token=${token}`;
 
     return {
       inviteLink
@@ -157,7 +157,7 @@ export const membersApi = {
 
       // Construir o link usando a rota atual
       const baseUrl = window.location.origin;
-      const inviteLink = `${baseUrl}/invitation?token=${token}`;
+      const inviteLink = `${baseUrl}/invitations?token=${token}`;
 
       return {
         inviteLink
