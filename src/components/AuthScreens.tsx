@@ -419,6 +419,7 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
           loginResponse.refreshToken,
           true // Salvar refreshToken em cookie
         );
+        await useAuthStore.getState().fetchUserPreferences();
         closeModal('loading');
         
         // O interceptor já verifica preferences e redireciona automaticamente
@@ -707,9 +708,12 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                       value={formData.confirmPassword}
                       onChange={(e) => {
                         const value = e.target.value;
-                        setFormData({...formData, confirmPassword: value});
+                        if (value.length <= 30) {
+                          setFormData({...formData, confirmPassword: value});
+                        }
                       }}
                       required
+                      maxLength={30}
                       disabled={isLoading}
                     />
                     <button

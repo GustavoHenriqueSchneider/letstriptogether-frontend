@@ -4,12 +4,20 @@ export interface User {
   name: string;
   email: string;
   avatar?: string;
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  likesShopping: boolean;
+  likesGastronomy: boolean;
+  culture?: string[];
+  entertainment?: string[];
+  placeTypes?: string[];
 }
 
 // Group Types
 export interface Group {
-  id: number; // ID numérico para compatibilidade
-  guid?: string; // GUID real da API
+  id: string; // GUID fornecido pela API
   name: string;
   members: number;
   status: 'voting' | 'matched' | 'planning';

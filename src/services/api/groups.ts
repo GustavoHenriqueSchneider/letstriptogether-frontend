@@ -75,12 +75,8 @@ export const groupsApi = {
           ? new Date(groupDetails.data.tripExpectedDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
           : new Date(item.createdAt).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
         
-        // Converter GUID para número usando hash simples (para compatibilidade com tipo Group)
-        const numericId = groupId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 1000000;
-        
         return {
-          id: numericId,
-          guid: groupId, // Manter GUID original
+          id: groupId,
           name: groupDetails.data.name,
           members: membersCount,
           status: hasMatches ? 'matched' as const : 'voting' as const,
@@ -107,7 +103,7 @@ export const groupsApi = {
 
     // Transformar resposta da API para formato do frontend
     return response.data.data.map((item) => ({
-      id: parseInt(item.id) || 0, // Converter GUID para número (temporário)
+      id: item.id,
       name: `Grupo ${item.id.substring(0, 8)}`, // Nome temporário
       members: 0, // Será preenchido quando buscar detalhes
       status: 'voting' as const,
@@ -120,13 +116,12 @@ export const groupsApi = {
    * Buscar grupo por ID
    * GET /api/v1/groups/:groupId
    */
-  async getById(id: string | number): Promise<Group> {
-    const groupId = typeof id === 'number' ? id.toString() : id;
-    const response = await apiClient.get<GetGroupByIdResponse>(`/groups/${groupId}`);
+  async getById(id: string): Promise<Group> {
+    const response = await apiClient.get<GetGroupByIdResponse>(`/groups/${id}`);
 
     // Transformar resposta da API para formato do frontend
     return {
-      id: parseInt(groupId) || 0, // Usar o ID do parâmetro
+      id,
       name: response.data.name,
       members: 0, // Será preenchido quando buscar membros
       status: 'voting' as const,
@@ -147,7 +142,7 @@ export const groupsApi = {
     });
 
     return {
-      id: parseInt(response.data.id) || 0,
+      id: response.data.id,
       name: data.name,
       members: 1,
       status: 'voting' as const,
@@ -160,42 +155,38 @@ export const groupsApi = {
    * Atualizar grupo
    * PUT /api/v1/groups/:groupId
    */
-  async update(id: string | number, data: Partial<Group>): Promise<Group> {
-    const groupId = typeof id === 'number' ? id.toString() : id;
-    await apiClient.put(`/groups/${groupId}`, {
+  async update(id: string, data: Partial<Group>): Promise<Group> {
+    await apiClient.put(`/groups/${id}`, {
       name: data.name
       // Adicione outros campos conforme necessário
     });
 
     // Buscar grupo atualizado
-    return this.getById(groupId);
+    return this.getById(id);
   },
 
   /**
    * Deletar grupo
    * DELETE /api/v1/groups/:groupId
    */
-  async delete(id: string | number): Promise<void> {
-    const groupId = typeof id === 'number' ? id.toString() : id;
-    await apiClient.delete(`/groups/${groupId}`);
+  async delete(id: string): Promise<void> {
+    await apiClient.delete(`/groups/${id}`);
   },
 
   /**
    * Sair do grupo
    * PATCH /api/v1/groups/:groupId/leave
    */
-  async leave(id: string | number): Promise<void> {
-    const groupId = typeof id === 'number' ? id.toString() : id;
-    await apiClient.patch(`/groups/${groupId}/leave`);
+  async leave(id: string): Promise<void> {
+    await apiClient.patch(`/groups/${id}/leave`);
   },
 
   /**
    * Obter destinos não votados pelo membro
    * GET /api/v1/groups/:groupId/destinations-not-voted
    */
-  async getNotVotedDestinations(groupId: string | number, pageNumber = 1, pageSize = 10) {
-    const id = typeof groupId === 'number' ? groupId.toString() : groupId;
-    const response = await apiClient.get(`/groups/${id}/destinations-not-voted`, {
+  async getNotVotedDestinations(groupId: string, pageNumber = 1, pageSize = 10) {
+    const response = await apiClient.get(`/groups/${groupId}/destinations-not-voted`, {
       params: { pageNumber, pageSize }
     });
     return response.data;

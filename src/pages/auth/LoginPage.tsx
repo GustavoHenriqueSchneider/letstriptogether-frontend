@@ -3,6 +3,7 @@ import { LoginScreen } from '@/components/AuthScreens';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/services/api/auth';
 import { useModalStore } from '@/store/modalStore';
+import { usersApi } from '@/services/api/users';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ export default function LoginPage() {
         response.refreshToken,
         true // Salvar refreshToken em cookie
       );
+
+      await useAuthStore.getState().fetchUserPreferences();
       
       closeModal('loading');
       

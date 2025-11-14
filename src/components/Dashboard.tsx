@@ -304,10 +304,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
             <div className="col-span-full text-center py-8">
               <p className="text-gray-600">Carregando grupos...</p>
             </div>
-          ) : groups.length === 0 ? (
-            <div className="col-span-full text-center py-8">
-              <p className="text-gray-600">Você ainda não possui grupos. Crie um novo grupo para começar!</p>
-            </div>
           ) : (
             <>
               {/* Create New Group Card */}
@@ -326,81 +322,85 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 </CardContent>
               </Card>
 
-              {groups.map((group, index) => {
-            // Define gradient colors based on index
-            const gradients = [
-              'from-blue-500 to-purple-600',
-              'from-green-500 to-teal-600',
-              'from-orange-500 to-pink-600',
-              'from-indigo-500 to-blue-600',
-              'from-red-500 to-orange-600',
-              'from-cyan-500 to-blue-600',
-            ];
-            const gradient = gradients[index % gradients.length];
-            
-            return (
-              <Card key={group.id} className="border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
-                <CardContent className="p-0" style={{ paddingBottom: 0 }}>
-                  {/* Image/Gradient Header */}
-                  <div className={`h-40 bg-gradient-to-br ${gradient} flex items-center justify-center relative`}>
-                    <div className="text-6xl">{group.avatar}</div>
-                    {/* Status Badge */}
-                    <div className="absolute top-3 right-3">
-                      <Badge className={`${getStatusColor(group.status)} border-0 shadow-sm`}>
-                        {getStatusText(group.status)}
-                      </Badge>
-                    </div>
-                  </div>
+              {groups.length > 0 && (
+                <>
+                  {groups.map((group, index) => {
+                    // Define gradient colors based on index
+                    const gradients = [
+                      'from-blue-500 to-purple-600',
+                      'from-green-500 to-teal-600',
+                      'from-orange-500 to-pink-600',
+                      'from-indigo-500 to-blue-600',
+                      'from-red-500 to-orange-600',
+                      'from-cyan-500 to-blue-600',
+                    ];
+                    const gradient = gradients[index % gradients.length];
+                    
+                    return (
+                      <Card key={group.id} className="border-0 shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group">
+                        <CardContent className="p-0" style={{ paddingBottom: 0 }}>
+                          {/* Image/Gradient Header */}
+                          <div className={`h-40 bg-gradient-to-br ${gradient} flex items-center justify-center relative`}>
+                            <div className="text-6xl">{group.avatar}</div>
+                            {/* Status Badge */}
+                            <div className="absolute top-3 right-3">
+                              <Badge className={`${getStatusColor(group.status)} border-0 shadow-sm`}>
+                                {getStatusText(group.status)}
+                              </Badge>
+                            </div>
+                          </div>
 
-                  {/* Card Content */}
-                  <div className="p-5 bg-white">
-                    <h3 className="font-semibold text-lg text-[#01001D] mb-3 group-hover:text-[#0E0652] transition-colors">
-                      {group.name}
-                    </h3>
+                          {/* Card Content */}
+                          <div className="p-5 bg-white">
+                            <h3 className="font-semibold text-lg text-[#01001D] mb-3 group-hover:text-[#0E0652] transition-colors">
+                              {group.name}
+                            </h3>
 
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Users className="h-4 w-4 mr-2 text-[#6496D8]" />
-                        <span>{group.members} {group.members > 1 ? 'membros' : 'membro'}</span>
+                            <div className="space-y-2 mb-4">
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Users className="h-4 w-4 mr-2 text-[#6496D8]" />
+                                <span>{group.members} {group.members > 1 ? 'membros' : 'membro'}</span>
+                              </div>
+                              <div className="flex items-center text-sm text-gray-600">
+                                <Calendar className="h-4 w-4 mr-2 text-[#6496D8]" />
+                                <span>{group.date ? new Date(group.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) : group.date}</span>
+                              </div>
+                            </div>
+
+                            <Button
+                              onClick={() => {
+                                const groupId = group.id;
+                                if (group.status === 'voting') {
+                                  onNavigate(`groups/${groupId}/vote`);
+                                } else if (group.status === 'matched') {
+                                  onNavigate(`groups/${groupId}/matches`);
+                                } else {
+                                  onNavigate(`groups/${groupId}/vote`);
+                                }
+                              }}
+                              className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
+                            >
+                              {group.status === 'voting' ? 'Continuar votando' : 
+                              group.status === 'matched' ? 'Ver matches' : 'Abrir grupo'}
+                              <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+
+                  {/* Loading More Indicator */}
+                  {isLoadingMore && (
+                    <div className="col-span-full text-center py-8">
+                      <div className="inline-block">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E0652]"></div>
+                        <p className="text-gray-600 mt-2">Carregando mais grupos...</p>
                       </div>
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2 text-[#6496D8]" />
-                        <span>{group.date ? new Date(group.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }) : group.date}</span>
-                      </div>
                     </div>
-
-                    <Button
-                      onClick={() => {
-                        const groupId = group.guid || group.id.toString();
-                        if (group.status === 'voting') {
-                          onNavigate(`groups/${groupId}/vote`);
-                        } else if (group.status === 'matched') {
-                          onNavigate(`groups/${groupId}/matches`);
-                        } else {
-                          onNavigate(`groups/${groupId}/vote`);
-                        }
-                      }}
-                      className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
-                    >
-                      {group.status === 'voting' ? 'Continuar votando' : 
-                       group.status === 'matched' ? 'Ver matches' : 'Abrir grupo'}
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-
-          {/* Loading More Indicator */}
-          {isLoadingMore && (
-            <div className="col-span-full text-center py-8">
-              <div className="inline-block">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0E0652]"></div>
-                <p className="text-gray-600 mt-2">Carregando mais grupos...</p>
-              </div>
-            </div>
-          )}
+                  )}
+                </>
+              )}
             </>
           )}
         </div>

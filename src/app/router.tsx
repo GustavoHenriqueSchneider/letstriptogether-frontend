@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
+import type { UserPreferences } from '@/types';
 
 // Lazy loading das páginas
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.default })));
@@ -34,6 +35,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   console.log('[ProtectedRoute] Component rendering');
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isInitialized = useAuthStore((state) => state.isInitialized);
+  const user = useAuthStore((state) => state.user);
+  const preferencesLoaded = useAuthStore((state) => state.preferencesLoaded);
   
   // Log para depuração
   React.useEffect(() => {
@@ -55,13 +58,39 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   
   console.log('[ProtectedRoute] Initialized, checking authentication...');
   console.log('[ProtectedRoute] isAuthenticated:', isAuthenticated);
-  if (isAuthenticated) {
-    console.log('[ProtectedRoute] Rendering: Protected content');
-    return <>{children}</>;
-  } else {
+  if (!isAuthenticated) {
     console.log('[ProtectedRoute] NOT authenticated, redirecting to /login');
     return <Navigate to="/login" replace />;
   }
+
+  const currentPath = window.location.pathname;
+  const preferences = (user as { preferences?: UserPreferences } | null)?.preferences;
+  const hasPreferences =
+    !!preferences &&
+    (
+      (preferences.culture?.length ?? 0) > 0 ||
+      (preferences.entertainment?.length ?? 0) > 0 ||
+      (preferences.placeTypes?.length ?? 0) > 0 ||
+      preferences.likesGastronomy ||
+      preferences.likesShopping
+    );
+
+  if (!preferencesLoaded) {
+    console.log('[ProtectedRoute] Waiting for preferences to load...');
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0E0652]"></div>
+      </div>
+    );
+  }
+
+  if (!hasPreferences && currentPath !== '/preferences') {
+    console.log('[ProtectedRoute] User missing preferences, redirecting to /preferences');
+    return <Navigate to="/preferences" replace />;
+  }
+
+  console.log('[ProtectedRoute] Rendering: Protected content');
+  return <>{children}</>;
 }
 
 const LoadingFallback = () => (

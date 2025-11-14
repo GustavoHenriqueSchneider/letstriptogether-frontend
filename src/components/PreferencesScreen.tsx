@@ -85,6 +85,7 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
   });
   const [isLoading, setIsLoading] = useState(true);
   const { openModal, closeModal, showError, showSuccess } = useModalStore();
+  const updateUser = useAuthStore((state) => state.updateUser);
 
   // Usar hook do Zustand para reagir a mudanças no isInitialized
   const isInitialized = useAuthStore((state) => state.isInitialized);
@@ -303,13 +304,16 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
         }
       });
 
-      await apiClient.put('/users/me/preferences', {
+      const savedPreferences = {
         likesShopping,
         likesGastronomy,
         culture,
         entertainment,
         placeTypes
-      });
+      };
+
+      await apiClient.put('/users/me/preferences', savedPreferences);
+      updateUser({ preferences: savedPreferences });
 
       closeModal('loading');
       showSuccess('Preferências salvas', 'Suas preferências foram salvas com sucesso!');

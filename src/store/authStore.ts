@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { User } from '@/types';
 import { cookies } from '@/utils/cookies';
 import { signalRClient } from '@/services/websocket/signalrClient';
+import { usersApi } from '@/services/api/users';
 
 /**
  * Verifica se um JWT token está expirado
@@ -42,11 +43,13 @@ interface AuthState {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isInitialized: boolean; // Flag para indicar se a inicialização foi concluída
+  preferencesLoaded: boolean;
   login: (user: User, accessToken: string, sessionId: string, refreshToken: string, refreshTokenInCookie?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: Partial<User>) => void;
   setTokens: (accessToken: string, refreshToken?: string) => void;
   init: () => void; // Inicializar do localStorage/cookies
+  fetchUserPreferences: () => Promise<void>;
 }
 
 /**
@@ -57,13 +60,14 @@ interface AuthState {
  * - sessionId: ID da sessão (localStorage)
  * - refreshToken: Token de renovação (cookie ou localStorage, configurável)
  */
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
   sessionId: null,
   refreshToken: null,
   isAuthenticated: false,
   isInitialized: false,
+  preferencesLoaded: false,
   
   login: async (user, accessToken, sessionId, refreshToken, refreshTokenInCookie = true) => {
     console.log('[AuthStore] login() - Starting login process');
@@ -99,6 +103,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
       console.error('[AuthStore] login() - Erro ao conectar WebSocket após login:', error);
     }
+
+    await get().fetchUserPreferences();
   },
   
   logout: async () => {
@@ -128,7 +134,8 @@ export const useAuthStore = create<AuthState>((set) => ({
       sessionId: null, 
       refreshToken: null, 
       isAuthenticated: false,
-      isInitialized: true
+      isInitialized: true,
+      preferencesLoaded: false
     });
     console.log('[AuthStore] logout() - State updated, isAuthenticated: false, isInitialized: true');
   },
@@ -222,9 +229,11 @@ export const useAuthStore = create<AuthState>((set) => ({
           sessionId: sessionId || null, // Pode ser null, será recuperado na próxima chamada
           refreshToken, 
           isAuthenticated: true,
-          isInitialized: true
+          isInitialized: true,
+          preferencesLoaded: false
         });
         console.log('[AuthStore] init() - State set: isAuthenticated=true, isInitialized=true');
+        get().fetchUserPreferences();
       } catch (error) {
         console.error('[AuthStore] init() - Error parsing user data:', error);
         // Limpar dados corrompidos
@@ -247,6 +256,18 @@ export const useAuthStore = create<AuthState>((set) => ({
       console.log('[AuthStore] init() - State set: isInitialized=true, isAuthenticated=false');
     }
     console.log('[AuthStore] init() - Initialization complete');
+  },
+  fetchUserPreferences: async () => {
+    set({ preferencesLoaded: false });
+    try {
+      const response = await usersApi.getCurrentUser();
+      set((state) => state.user ? { user: { ...state.user, preferences: response.preferences || null } } : state);
+      console.log('[AuthStore] fetchUserPreferences() - Preferences updated');
+    } catch (error) {
+      console.error('[AuthStore] fetchUserPreferences() - Error fetching preferences:', error);
+    } finally {
+      set({ preferencesLoaded: true });
+    }
   },
 }));
 
