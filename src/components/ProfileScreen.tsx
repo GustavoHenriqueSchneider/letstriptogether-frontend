@@ -36,6 +36,10 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
     name: '',
     email: ''
   });
+  const [originalData, setOriginalData] = useState({
+    name: '',
+    email: ''
+  });
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,10 +58,12 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
     setIsLoading(true);
     try {
       const userData = await usersApi.getCurrentUser();
-      setFormData({
+      const data = {
         name: userData.name,
         email: userData.email
-      });
+      };
+      setFormData(data);
+      setOriginalData(data);
     } catch (error: any) {
       showError('Erro ao carregar dados', error.response?.data?.message || 'Não foi possível carregar seus dados');
     } finally {
@@ -95,6 +101,7 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
       
       // Atualizar o estado local com o nome trimado
       setFormData(prev => ({ ...prev, name: trimmedName }));
+      setOriginalData(prev => ({ ...prev, name: trimmedName }));
       
       // Atualizar o usuário no authStore também
       const { updateUser } = useAuthStore.getState();
@@ -167,7 +174,12 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
               Informações pessoais
             </CardTitle>
             <button
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                if (isEditing) {
+                  setFormData(originalData);
+                }
+                setIsEditing(!isEditing);
+              }}
               className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
             >
               <Edit3 className="h-5 w-5 text-[#0E0652]" />
@@ -212,7 +224,10 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
             {isEditing && (
               <div className="flex space-x-3 pt-4">
                 <Button
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setFormData(originalData);
+                    setIsEditing(false);
+                  }}
                   variant="outline"
                   className="flex-1 border-gray-300 text-gray-700 hover:border-[#6496D8] hover:bg-white hover:text-gray-900"
                 >

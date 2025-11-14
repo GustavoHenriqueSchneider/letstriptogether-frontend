@@ -235,7 +235,7 @@ export function ChangePasswordScreen({ onNavigate }: ChangePasswordScreenProps) 
               className="w-full bg-[#0E0652] hover:bg-[#130F61] text-white"
               disabled={!isFormValid}
             >
-              Alterar Senha
+              Alterar senha
             </Button>
           </CardContent>
         </Card>

@@ -46,8 +46,12 @@ export const useModalStore = create<ModalState>((set) => ({
     } else if (type === 'success' || type === 'error' || type === 'info') {
       set({ [type]: { show: false, title: '', message: '', ...(type === 'error' || type === 'success' ? { onClose: null } : {}) } });
     } else if (type === 'confirmation' || type === 'delete') {
-      // Resetar estado de forma atômica para evitar renderizações intermediárias
-      set({ [type]: { show: false, title: '', message: '', onConfirm: null } });
+      set((state) => ({
+        [type]: {
+          ...state[type as 'confirmation' | 'delete'],
+          show: false
+        }
+      }));
     }
   },
   showSuccess: (title, message = '', onClose) => {
@@ -57,13 +61,13 @@ export const useModalStore = create<ModalState>((set) => ({
     set({ error: { show: true, title, message, onClose: onClose || null } });
   },
   showConfirmation: (message, onConfirm, title = 'Confirmar ação') => {
-    set({ confirmation: { show: true, title, message, onConfirm } });
+    set({ confirmation: { show: true, title: title || 'Confirmar ação', message, onConfirm } });
   },
   showInfo: (title, message) => {
     set({ info: { show: true, title, message } });
   },
   showDeleteConfirmation: (onConfirm, title = 'Excluir item', message = 'Esta ação não pode ser desfeita. Tem certeza que deseja continuar?') => {
-    set({ delete: { show: true, title, message, onConfirm } });
+    set({ delete: { show: true, title: title || 'Excluir item', message, onConfirm } });
   },
 }));
 

@@ -62,7 +62,7 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
         }
       } catch (error: any) {
         console.error('[MembersScreen] Erro ao verificar grupo:', error);
-        if (isMounted && error.response?.status === 404 && !hasHandled404.current) {
+        if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
             'Grupo não encontrado',
@@ -125,7 +125,7 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
       console.error('[MembersScreen] Erro ao carregar membros:', error);
       if (isInitial) {
         // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
-        if (error.response?.status === 404 && !hasHandled404.current) {
+        if ([404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
             'Grupo não encontrado',
@@ -134,7 +134,7 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
               onNavigate('dashboard');
             }
           );
-        } else if (error.response?.status !== 404) {
+        } else if (![404, 400].includes(error.response?.status)) {
           showError('Erro ao carregar membros', error.response?.data?.message || 'Não foi possível carregar os membros do grupo');
         }
       }
@@ -246,7 +246,7 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
                     {isCurrentUserOwner && (
                       <button
                         onClick={() => handleRemoveMember(member.id, member.name)}
-                        className="p-1 hover:bg-red-100 hover:border-2 hover:border-red-500 rounded-full transition-all duration-200 text-gray-500 hover:text-red-600 hover:scale-110 border-2 border-transparent"
+                        className="p-1 hover:bg-blue-100 hover:border-2 hover:border-[#6496D8] rounded-full transition-all duration-200 text-gray-500 hover:text-[#6496D8] hover:scale-110 border-2 border-transparent"
                         aria-label="Remover membro"
                       >
                         <X className="h-5 w-5" />

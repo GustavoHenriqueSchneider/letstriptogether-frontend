@@ -77,7 +77,7 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         }
       } catch (error: any) {
         console.error('[VotingScreen] Erro ao verificar grupo ou carregar destinos:', error);
-        if (isMounted && !shouldStop && error.response?.status === 404 && !hasHandled404.current) {
+        if (isMounted && !shouldStop && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           shouldStop = true;
           hasHandled404.current = true;
           // Fechar loading antes de mostrar erro

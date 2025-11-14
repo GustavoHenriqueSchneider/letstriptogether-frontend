@@ -37,7 +37,7 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
       } catch (error: any) {
         console.error('[GroupSettingsScreen] Erro ao carregar informações do grupo:', error);
         // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
-        if (isMounted && error.response?.status === 404 && !hasHandled404.current) {
+        if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
             'Grupo não encontrado',

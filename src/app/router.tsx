@@ -17,6 +17,17 @@ const TermsOfUsePage = lazy(() => import('@/pages/legal/TermsOfUsePage').then(m 
 const ChangePasswordPage = lazy(() => import('@/pages/profile/ChangePasswordPage').then(m => ({ default: m.default })));
 const GroupSettingsPage = lazy(() => import('@/pages/settings/GroupSettingsPage').then(m => ({ default: m.default })));
 const LandingPage = lazy(() => import('@/pages/LandingPage').then(m => ({ default: m.default })));
+const AboutUsPage = lazy(() => import('@/pages/about/AboutUsPage').then(m => ({ default: m.default })));
+
+function GuestRoute({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 // Componente de rota protegida
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -81,25 +92,31 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <LoginPage />
-      </Suspense>
+      <GuestRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <LoginPage />
+        </Suspense>
+      </GuestRoute>
     ),
   },
   {
     path: '/register',
     element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <RegisterPage />
-      </Suspense>
+      <GuestRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <RegisterPage />
+        </Suspense>
+      </GuestRoute>
     ),
   },
   {
     path: '/reset-password',
     element: (
-      <Suspense fallback={<LoadingFallback />}>
-        <ResetPasswordPage />
-      </Suspense>
+      <GuestRoute>
+        <Suspense fallback={<LoadingFallback />}>
+          <ResetPasswordPage />
+        </Suspense>
+      </GuestRoute>
     ),
   },
   {
@@ -197,6 +214,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<LoadingFallback />}>
         <TermsOfUsePage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/about-us',
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <AboutUsPage />
       </Suspense>
     ),
   },

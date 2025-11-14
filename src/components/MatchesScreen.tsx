@@ -65,7 +65,7 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
       console.error('[MatchesScreen] Erro ao carregar matches:', error);
       if (isInitial) {
         // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
-        if (error.response?.status === 404 && !hasHandled404.current) {
+        if ([404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
             'Grupo não encontrado',
@@ -74,7 +74,7 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
               onNavigate('dashboard');
             }
           );
-        } else if (error.response?.status !== 404) {
+        } else if (![404, 400].includes(error.response?.status)) {
           showError('Erro ao carregar matches', error.response?.data?.message || 'Não foi possível carregar os matches do grupo');
         }
       }
@@ -103,7 +103,7 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
         }
       } catch (error: any) {
         console.error('[MatchesScreen] Erro ao verificar grupo:', error);
-        if (isMounted && error.response?.status === 404 && !hasHandled404.current) {
+        if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
             'Grupo não encontrado',
@@ -276,9 +276,9 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
                       <div>
                         <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
                         <div className="flex flex-wrap gap-2">
-                          {[...new Set(match.destination.preferences)].map((pref, index) => (
+                          {Array.from(new Set(match.destination.preferences)).map((pref, index) => (
                             <Badge key={index} className="bg-[#6496D8] text-white">
-                              {getPreferenceLabel(pref)}
+                              {getPreferenceLabel(pref as string)}
                             </Badge>
                           ))}
                         </div>

@@ -157,8 +157,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   };
 
+  const handleCreateGroupModalChange = (open: boolean) => {
+    setShowCreateGroupModal(open);
+    if (!open) {
+      setGroupFormData({ name: '', date: '' });
+    }
+  };
+
   const handleCreateGroup = () => {
-    setShowCreateGroupModal(true);
+    handleCreateGroupModalChange(true);
   };
 
   const handleConfirmCreateGroup = async () => {
@@ -223,8 +230,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       // Mostrar modal de sucesso e redirecionar para votação
       closeModal('loading');
       const { showSuccess } = useModalStore.getState();
-      showSuccess('Grupo criado com sucesso!', 'Agora você pode começar a votar nos destinos.', () => {
-        onNavigate('group-vote');
+      showSuccess('Grupo criado com sucesso!', 'Agora você pode convidar seus amigos para começar.', () => {
+        onNavigate(`groups/${newGroup.id}/members`);
+        setShowInviteLinkModal(true);
       });
     } catch (error: any) {
       showError('Erro ao criar grupo', 'Não foi possível criar o grupo!');
@@ -399,7 +407,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       </main>
 
       {/* Create Group Modal */}
-      <Dialog open={showCreateGroupModal} onOpenChange={setShowCreateGroupModal}>
+      <Dialog open={showCreateGroupModal} onOpenChange={handleCreateGroupModalChange}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[#01001D]">Criando um grupo</DialogTitle>
@@ -440,7 +448,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <DialogFooter>
             <Button 
               variant="outline" 
-              onClick={() => setShowCreateGroupModal(false)}
+              onClick={() => handleCreateGroupModalChange(false)}
             >
               Cancelar
             </Button>

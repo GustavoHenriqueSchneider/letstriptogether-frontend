@@ -1,8 +1,11 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
+import { router } from '@/app/router';
 import { signalRClient } from '@/services/websocket/signalrClient';
 import { useAuthStore } from '@/store/authStore';
 import { useModalStore } from '@/store/modalStore';
 import type { Notification } from '@/types';
+
+const PUBLIC_ROUTES = ['/', '/login', '/register', '/terms-of-use', '/about-us'];
 
 /**
  * Hook para gerenciar conexão WebSocket e receber notificações
@@ -10,10 +13,23 @@ import type { Notification } from '@/types';
 export function useWebSocket() {
   const { isAuthenticated } = useAuthStore();
   const { showSuccess, showError } = useModalStore();
+  const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
+
+  useEffect(() => {
+    const unsubscribe = router.subscribe((state) => {
+      setCurrentPath(state.location.pathname);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   // Conectar quando autenticado
   useEffect(() => {
-    if (isAuthenticated) {
+    const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
+
+    if (isAuthenticated && !isPublicRoute) {
       signalRClient.connect().catch((error) => {
         console.error('Erro ao conectar WebSocket:', error);
         showError('Erro ao conectar com o servidor em tempo real');
@@ -30,7 +46,7 @@ export function useWebSocket() {
         signalRClient.disconnect().catch(console.error);
       }
     };
-  }, [isAuthenticated, showError]);
+  }, [isAuthenticated, currentPath, showError]);
 
   // Handler para notificações
   const handleNotification = useCallback((notification: Notification) => {
