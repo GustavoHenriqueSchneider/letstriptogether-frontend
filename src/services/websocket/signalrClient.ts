@@ -37,7 +37,7 @@ class SignalRClient {
           if (retryContext.previousRetryCount < this.maxReconnectAttempts) {
             return this.reconnectDelay * (retryContext.previousRetryCount + 1);
           }
-          return null; // Para tentativas após maxReconnectAttempts
+          return null;
         }
       })
       .configureLogging(signalR.LogLevel.Information)

@@ -5,7 +5,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, X, Check } from 'lucide-react';
-import backgroundImage from 'figma:asset/9461ca4209b21dd0f47647fbada0c1c80b8c5f4a.png';
+import backgroundImage from 'asset/9461ca4209b21dd0f47647fbada0c1c80b8c5f4a.png';
 import { authApi } from '@/services/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useModalStore } from '@/store/modalStore';
@@ -267,8 +267,8 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
   });
   const [verificationCode, setVerificationCode] = useState('');
   const [resendCooldownSeconds, setResendCooldownSeconds] = useState(0);
-  const [emailToken, setEmailToken] = useState<string | null>(null); // Token da etapa 1
-  const [registerToken, setRegisterToken] = useState<string | null>(null); // Token da etapa 2
+  const [emailToken, setEmailToken] = useState<string | null>(null);
+  const [registerToken, setRegisterToken] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -555,7 +555,7 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                       onChange={(e) => {
                         const value = e.target.value;
                         setFormData({...formData, email: value});
-                        setEmailInUse(false); // Limpar erro quando usuário alterar o email
+                        setEmailInUse(false);
                         if (value.length > 0) {
                           setEmailValid(isValidEmail(value));
                         } else {

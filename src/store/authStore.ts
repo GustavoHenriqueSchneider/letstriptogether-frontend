@@ -192,7 +192,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ 
           user, 
           accessToken, 
-          sessionId: sessionId || null, // Pode ser null, será recuperado na próxima chamada
+          sessionId: sessionId || null,
           refreshToken, 
           isAuthenticated: true,
           isInitialized: true,
