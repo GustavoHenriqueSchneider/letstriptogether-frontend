@@ -1,11 +1,4 @@
-/**
- * Utilitários para gerenciar cookies
- */
-
 export const cookies = {
-  /**
-   * Define um cookie
-   */
   set(name: string, value: string, days?: number): void {
     let expires = '';
     if (days) {
@@ -16,9 +9,6 @@ export const cookies = {
     document.cookie = `${name}=${value || ''}${expires}; path=/; SameSite=Lax`;
   },
 
-  /**
-   * Obtém um cookie
-   */
   get(name: string): string | null {
     const nameEQ = `${name}=`;
     const ca = document.cookie.split(';');
@@ -30,9 +20,6 @@ export const cookies = {
     return null;
   },
 
-  /**
-   * Remove um cookie
-   */
   remove(name: string): void {
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
   },

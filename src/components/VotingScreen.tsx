@@ -52,9 +52,8 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
   const hasHandled404 = useRef(false);
   const pageSize = 10;
 
-  // Verificar se o grupo existe antes de carregar destinos
   useEffect(() => {
-    hasHandled404.current = false; // Resetar flag ao mudar de grupo
+    hasHandled404.current = false;
     let isMounted = true;
     let shouldStop = false;
     
@@ -65,10 +64,8 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
       openModal('loading');
       
       try {
-        // Primeiro verificar se o grupo existe
         await groupsApi.getById(groupId);
         
-        // Se chegou aqui, o grupo existe - carregar destinos
         if (isMounted && !shouldStop) {
           const result = await destinationsApi.getNotVotedByGroup(groupId, 1, pageSize);
           setDestinations(result.destinations);
@@ -81,13 +78,10 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         if (isMounted && !shouldStop && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           shouldStop = true;
           hasHandled404.current = true;
-          // Fechar loading antes de mostrar erro
           closeModal('loading');
           setIsLoading(false);
-          // Não tentar mais carregar dados
           setHasMore(false);
           setAllDestinationsLoaded(true);
-          // Pequeno delay para garantir que o modal foi fechado
           setTimeout(() => {
             if (isMounted) {
               showError(
@@ -99,7 +93,7 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
               );
             }
           }, 100);
-          return; // Sair imediatamente após tratar o 404
+          return;
         }
       } finally {
         if (isMounted && !shouldStop) {
@@ -115,10 +109,8 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
       isMounted = false;
       shouldStop = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]); // openModal, closeModal e showError não estão nas dependências para evitar loop
+  }, [groupId]);
 
-  // Carregar mais destinos quando necessário
   const loadMoreDestinations = async () => {
     if (isLoadingMore || !hasMore || allDestinationsLoaded) return;
 
@@ -143,7 +135,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
     }
   };
 
-  // Carregar mais quando estiver próximo do fim
   useEffect(() => {
     const remainingDestinations = destinations.length - currentIndex;
     if (remainingDestinations <= 3 && hasMore && !isLoadingMore && !allDestinationsLoaded) {
@@ -223,21 +214,17 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
     if (!currentDestination) return;
 
     const destinationId = currentDestination.id;
-    const isApproved = vote === 'like'; // true para like, false para pass
+    const isApproved = vote === 'like';
     
     try {
-      // Enviar voto para a API
       await destinationsApi.vote(groupId, destinationId, isApproved);
       
-      // Atualizar estado local
       setVotes(prev => ({...prev, [destinationId]: vote}));
       
-      // Avançar para o próximo destino
       const nextIndex = currentIndex + 1;
       if (nextIndex < destinations.length) {
         setCurrentIndex(nextIndex);
       } else {
-        // Tentar carregar mais destinos se houver
         if (hasMore && !allDestinationsLoaded) {
           const result = await destinationsApi.getNotVotedByGroup(groupId, currentPage + 1, pageSize);
           if (result.destinations.length > 0) {
@@ -246,7 +233,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
               setHasMore(result.hasMore);
               setCurrentPage(currentPage + 1);
               setAllDestinationsLoaded(!result.hasMore);
-              // Avançar para o próximo se houver
               if (newDestinations.length > nextIndex) {
                 setCurrentIndex(nextIndex);
               }
@@ -260,7 +246,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
       }
     } catch (error) {
       console.error('Erro ao votar:', error);
-      // Mesmo em caso de erro, avançar para não travar a interface
       setVotes(prev => ({...prev, [destinationId]: vote}));
     if (currentIndex < destinations.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -289,7 +274,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
     return Math.max(0.7, 1 - Math.abs(dragOffset) * 0.003);
   };
 
-  // Mostrar mensagem quando não houver mais destinos
   if (destinations.length === 0 || (currentIndex >= destinations.length && allDestinationsLoaded)) {
     return (
       <div className="min-h-screen bg-white">
@@ -369,24 +353,20 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
     );
   }
 
-  // Se não há destino atual, não renderizar nada (aguardar carregamento)
   if (!currentDestination) {
     return null;
   }
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <Header 
         title={groupName || 'Grupo'}
         onBack={() => onNavigate('dashboard')}
         showBackButton={true}
       />
 
-      {/* Cards Stack */}
       <div className="flex justify-center px-6 mb-8 pt-8 max-w-7xl mx-auto">
         <div className="relative w-full max-w-sm">
-          {/* Background cards */}
           {currentIndex + 1 < destinations.length && (
             <Card className="absolute top-2 left-2 right-2 h-96 bg-white/90 transform rotate-1" />
           )}
@@ -394,7 +374,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
             <Card className="absolute top-4 left-4 right-4 h-96 bg-white/70 transform rotate-2" />
           )}
           
-          {/* Current card */}
           <Card 
             ref={cardRef}
             className="relative w-full h-96 cursor-grab active:cursor-grabbing shadow-2xl overflow-hidden"
@@ -425,7 +404,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
               <div className="absolute inset-0 bg-black/30" />
             </div>
             
-            {/* Voting indicators */}
             <div className={`absolute top-8 left-8 transform rotate-12 ${dragOffset > 50 ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
               <Badge className="bg-green-500 text-white text-lg px-4 py-2">
                 <Heart className="h-5 w-5 mr-2" />
@@ -463,7 +441,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         </div>
       </div>
 
-      {/* Action buttons */}
       <div className="px-8 pb-8">
         <div className="flex justify-center space-x-8">
           <button
@@ -482,7 +459,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         </div>
       </div>
 
-      {/* Destination Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -493,12 +469,10 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
           
           {selectedDestination && (
             <div className="space-y-6 mt-4">
-              {/* Descrição */}
               <div>
                 <p className="text-sm text-gray-700">{selectedDestination.description}</p>
               </div>
 
-              {/* Preferências atendidas */}
               {selectedDestination.preferences && selectedDestination.preferences.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
@@ -512,7 +486,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
                 </div>
               )}
 
-              {/* Atrações */}
               {selectedDestination.attractions && selectedDestination.attractions.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-[#01001D] mb-3">Atrações do destino:</h4>
@@ -538,7 +511,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         </DialogContent>
       </Dialog>
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="flex items-center justify-around py-2">
           <button 

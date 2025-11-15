@@ -17,7 +17,6 @@ export default function GroupSettingsPage() {
     return null;
   }
 
-  // Se já detectou 404, redirecionar imediatamente
   if (has404) {
     navigate('/dashboard');
     return null;
@@ -25,7 +24,7 @@ export default function GroupSettingsPage() {
 
   useEffect(() => {
     let isMounted = true;
-    hasHandled404.current = false; // Resetar flag ao mudar de grupo
+    hasHandled404.current = false;
     const loadGroupName = async () => {
       try {
         const group = await groupsApi.getById(groupId);
@@ -34,10 +33,9 @@ export default function GroupSettingsPage() {
         }
       } catch (error: any) {
         console.error('Erro ao carregar nome do grupo:', error);
-        // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
         if (isMounted && error.response?.status === 404 && !hasHandled404.current) {
           hasHandled404.current = true;
-          setHas404(true); // Marcar como 404 para redirecionar
+          setHas404(true);
           showError(
             'Grupo não encontrado',
             'O grupo que você está tentando acessar não foi encontrado.',
@@ -53,8 +51,7 @@ export default function GroupSettingsPage() {
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]); // Removido navigate e showError das dependências para evitar loop
+  }, [groupId]);
 
   const handleNavigate = (screen: string) => {
     if (screen.startsWith('groups/')) {

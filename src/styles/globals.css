@@ -40,7 +40,6 @@
   --sidebar-border: rgba(1, 0, 29, 0.1);
   --sidebar-ring: #6496D8;
   
-  /* Custom Trip Colors */
   --trip-primary: #0E0652;
   --trip-primary-light: #130F61;
   --trip-secondary: #002F76;
@@ -138,9 +137,6 @@
   }
 }
 
-/**
- * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
- */
 @layer base {
   :where(:not(:has([class*=" text-"]), :not(:has([class^="text-"])))) {
     h1 {

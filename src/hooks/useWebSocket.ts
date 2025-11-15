@@ -8,9 +8,6 @@ import { useNotificationsStore } from '@/store/notificationsStore';
 
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/terms-of-use', '/about-us'];
 
-/**
- * Hook para gerenciar conexão WebSocket e receber notificações
- */
 export function useWebSocket() {
   const { isAuthenticated } = useAuthStore();
   const { showSuccess, showError } = useModalStore();
@@ -27,7 +24,6 @@ export function useWebSocket() {
     };
   }, []);
 
-  // Conectar quando autenticado
   useEffect(() => {
     const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
 
@@ -42,7 +38,6 @@ export function useWebSocket() {
       });
     }
 
-    // Cleanup ao desmontar
     return () => {
       if (!isAuthenticated) {
         signalRClient.disconnect().catch(console.error);
@@ -50,7 +45,6 @@ export function useWebSocket() {
     };
   }, [isAuthenticated, currentPath, showError]);
 
-  // Handler para notificações
   const handleNotification = useCallback((notification: Notification) => {
     console.log('Nova notificação recebida:', notification);
 
@@ -91,19 +85,14 @@ export function useWebSocket() {
 
   }, [addNotification, showSuccess]);
 
-  // Handler para atualizações de grupo
   const handleGroupUpdated = useCallback((group: any) => {
     console.log('Grupo atualizado:', group);
-    // Aqui você pode atualizar o estado do grupo ou mostrar uma notificação
   }, []);
 
-  // Handler para atualizações de match
   const handleMatchUpdated = useCallback((match: any) => {
     console.log('Match atualizado:', match);
-    // Aqui você pode atualizar o estado do match ou mostrar uma notificação
   }, []);
 
-  // Registrar handlers
   useEffect(() => {
     const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
 
@@ -113,7 +102,6 @@ export function useWebSocket() {
       signalRClient.onMatchUpdated(handleMatchUpdated);
     }
 
-    // Cleanup handlers
     return () => {
       signalRClient.removeAllHandlers();
     };

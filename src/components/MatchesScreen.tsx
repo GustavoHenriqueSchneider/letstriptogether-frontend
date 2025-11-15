@@ -41,7 +41,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
   const hasHandled404 = useRef(false);
   const pageSize = 10;
 
-  // Definir loadMatches antes de usar no useEffect
   const loadMatches = async (page = 1, isInitial = false) => {
     if (isInitial) {
       setIsLoading(true);
@@ -65,7 +64,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
     } catch (error: any) {
       console.error('[MatchesScreen] Erro ao carregar matches:', error);
       if (isInitial) {
-        // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
         if ([404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
@@ -89,16 +87,13 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
     }
   };
 
-  // Verificar se o grupo existe antes de carregar matches
   useEffect(() => {
-    hasHandled404.current = false; // Resetar flag ao mudar de grupo
+    hasHandled404.current = false;
     let isMounted = true;
     
     const verifyAndLoadMatches = async () => {
       try {
-        // Primeiro verificar se o grupo existe
         await groupsApi.getById(groupId);
-        // Se chegou aqui, o grupo existe - carregar matches
         if (isMounted) {
           await loadMatches(1, true);
         }
@@ -122,16 +117,13 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]); // loadMatches não está nas dependências para evitar loop
+  }, [groupId]);
 
-  // Detectar scroll para carregar mais matches
   useEffect(() => {
     const handleScroll = () => {
-      // Verificar se chegou ao final da página
       if (
         window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 100 // 100px antes do fim
+        document.documentElement.offsetHeight - 100
       ) {
         if (!isLoadingMore && hasMore && !isLoading && !allMatchesLoaded) {
           loadMoreMatches();
@@ -159,7 +151,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
           await matchesApi.remove(groupId, matchId);
           closeModal('loading');
           showSuccess('Match removido', `${matchName} foi removido dos matches do grupo com sucesso.`);
-          // Recarregar lista de matches do início
           await loadMatches(1, true);
         } catch (error: any) {
           closeModal('loading');
@@ -174,7 +165,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header 
         title="Matches do Grupo"
         subtitle={groupName || 'Carregando...'}
@@ -215,7 +205,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
         </div>
       ) : (
         <div className="p-6 pb-24 max-w-7xl mx-auto space-y-6">
-          {/* Matches List */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center text-[#01001D]">
@@ -283,7 +272,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
 
                       {selectedMatch === match.id && (
                         <div className="mt-4 pt-4 border-t space-y-4">
-                          {/* Preferências atendidas */}
                           {match.destination.preferences && match.destination.preferences.length > 0 && (
                             <div>
                               <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
@@ -297,7 +285,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
                             </div>
                           )}
 
-                          {/* Atrações */}
                           {match.destination.attractions && match.destination.attractions.length > 0 && (
                             <div>
                               <h4 className="text-sm font-semibold text-[#01001D] mb-3">Atrações do destino:</h4>
@@ -324,7 +311,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
                   );
                 })}
                 
-                {/* Loading indicator ao carregar mais */}
                 {isLoadingMore && (
                   <div className="text-center py-4">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0E0652]"></div>
@@ -337,7 +323,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
         </div>
       )}
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="flex items-center justify-around py-2">
           <button 

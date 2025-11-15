@@ -23,7 +23,6 @@ export default function InvitationsPage() {
   const [invitationState, setInvitationState] = useState<InvitationState>({ status: 'loading' });
   const [isActionLoading, setIsActionLoading] = useState(false);
 
-  // Sem token -> volta pra landing
   useEffect(() => {
     if (token === undefined) return;
     if (!token) {
@@ -31,7 +30,6 @@ export default function InvitationsPage() {
     }
   }, [token, navigate]);
 
-  // Usuário precisa estar logado
   useEffect(() => {
     if (!token || !isInitialized) return;
     if (!isAuthenticated) {
@@ -39,7 +37,6 @@ export default function InvitationsPage() {
     }
   }, [token, isAuthenticated, isInitialized, navigate]);
 
-  // Carregar informações do convite
   useEffect(() => {
     const fetchInvitation = async () => {
       if (!token || !isAuthenticated || !isInitialized) return;

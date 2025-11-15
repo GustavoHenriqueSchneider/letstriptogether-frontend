@@ -34,7 +34,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
   const hasHandled404 = useRef(false);
   const pageSize = 10;
 
-  // Carregar grupo para verificar se usuário é owner
   useEffect(() => {
     const loadGroupInfo = async () => {
       try {
@@ -47,16 +46,13 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
     loadGroupInfo();
   }, [groupId]);
 
-  // Verificar se o grupo existe antes de carregar membros
   useEffect(() => {
-    hasHandled404.current = false; // Resetar flag ao mudar de grupo
+    hasHandled404.current = false;
     let isMounted = true;
     
     const verifyAndLoadMembers = async () => {
       try {
-        // Primeiro verificar se o grupo existe
         await groupsApi.getById(groupId);
-        // Se chegou aqui, o grupo existe - carregar membros
         if (isMounted) {
           await loadMembers(1, true);
         }
@@ -80,16 +76,13 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]); // loadMembers não está nas dependências para evitar loop
+  }, [groupId]);
 
-  // Detectar scroll para carregar mais membros
   useEffect(() => {
     const handleScroll = () => {
-      // Verificar se chegou ao final da página
       if (
         window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 100 // 100px antes do fim
+        document.documentElement.offsetHeight - 100
       ) {
         if (!isLoadingMore && hasMore && !isLoading && !allMembersLoaded) {
           loadMoreMembers();
@@ -124,7 +117,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
     } catch (error: any) {
       console.error('[MembersScreen] Erro ao carregar membros:', error);
       if (isInitial) {
-        // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
         if ([404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
@@ -155,7 +147,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
     await loadMembers(nextPage, false);
   };
 
-  // Ordenar membros por nome em ordem crescente
   const sortedMembers = useMemo(() => {
     return [...members].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
   }, [members]);
@@ -168,7 +159,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
           await membersApi.remove(groupId, memberId);
           closeModal('loading');
           showSuccess('Membro removido', `${memberName} foi removido do grupo com sucesso.`);
-          // Recarregar lista de membros do início
           await loadMembers(1, true);
         } catch (error: any) {
           closeModal('loading');
@@ -182,7 +172,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
       <Header 
         title="Membros do Grupo"
         subtitle={groupName || 'Carregando...'}
@@ -190,7 +179,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
       />
 
       <div className="p-6 pb-20 max-w-7xl mx-auto space-y-6">
-        {/* Add Member Button - apenas para owners */}
         {isCurrentUserOwner && (
           <Card className="border-dashed border-2 border-[#6496D8] bg-blue-50 hover:bg-blue-100 hover:border-[#0E0652] transition-all duration-200">
             <CardContent className="p-4 pb-4 flex items-center justify-center">
@@ -205,7 +193,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
           </Card>
         )}
 
-        {/* Members List */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center text-[#01001D]">
@@ -220,7 +207,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
               </div>
             ) : (
               <>
-                {/* Usuário atual - "Você" */}
                 <div className="flex items-center p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-2 flex-1">
                     <h3 className="font-medium text-[#01001D]">Você</h3>
@@ -232,7 +218,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
                   </div>
                 </div>
 
-                {/* Outros membros */}
                 {sortedMembers.map((member) => (
                   <div key={member.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-2 flex-1">
@@ -255,7 +240,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
                   </div>
                 ))}
 
-                {/* Loading indicator ao carregar mais */}
                 {isLoadingMore && (
                   <div className="text-center py-4">
                     <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-[#0E0652]"></div>
@@ -268,7 +252,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
         </Card>
       </div>
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="flex items-center justify-around py-2">
           <button 

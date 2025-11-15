@@ -4,35 +4,27 @@ import { cookies } from '@/utils/cookies';
 import { signalRClient } from '@/services/websocket/signalrClient';
 import { usersApi } from '@/services/api/users';
 
-/**
- * Verifica se um JWT token está expirado
- * @param token JWT token
- * @returns true se o token está expirado ou inválido
- */
 function isTokenExpired(token: string): boolean {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) {
-      return true; // Token inválido
+      return true;
     }
     
     const payload = JSON.parse(atob(parts[1]));
     const exp = payload.exp;
     
     if (!exp) {
-      return true; // Token sem expiração
+      return true;
     }
     
-    // exp é um timestamp Unix em segundos
-    const expirationTime = exp * 1000; // Converter para milissegundos
+    const expirationTime = exp * 1000;
     const now = Date.now();
     
-    // Considerar expirado apenas se realmente passou do tempo de expiração
-    // Não usar margem de segurança aqui, deixar o interceptor do Axios lidar com refresh
     return now >= expirationTime;
   } catch (error) {
     console.error('[AuthStore] Error checking token expiration:', error);
-    return true; // Em caso de erro, considerar expirado
+    return true;
   }
 }
 
@@ -42,24 +34,16 @@ interface AuthState {
   sessionId: string | null;
   refreshToken: string | null;
   isAuthenticated: boolean;
-  isInitialized: boolean; // Flag para indicar se a inicialização foi concluída
+  isInitialized: boolean;
   preferencesLoaded: boolean;
   login: (user: User, accessToken: string, sessionId: string, refreshToken: string, refreshTokenInCookie?: boolean) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (user: Partial<User>) => void;
   setTokens: (accessToken: string, refreshToken?: string) => void;
-  init: () => void; // Inicializar do localStorage/cookies
+  init: () => void;
   fetchUserPreferences: () => Promise<void>;
 }
 
-/**
- * Store de autenticação
- * 
- * Gerencia:
- * - accessToken: Token de acesso (localStorage)
- * - sessionId: ID da sessão (localStorage)
- * - refreshToken: Token de renovação (cookie ou localStorage, configurável)
- */
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   accessToken: null,
@@ -71,15 +55,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   login: async (user, accessToken, sessionId, refreshToken, refreshTokenInCookie = true) => {
     console.log('[AuthStore] login() - Starting login process');
-    // Salvar accessToken e sessionId no localStorage
     localStorage.setItem('accessToken', accessToken);
     localStorage.setItem('sessionId', sessionId);
     localStorage.setItem('authUser', JSON.stringify(user));
     console.log('[AuthStore] login() - Saved tokens to localStorage');
     
-    // Salvar refreshToken em cookie ou localStorage
     if (refreshTokenInCookie) {
-      // Cookie expira em 30 dias (ajuste conforme necessário)
       cookies.set('refreshToken', refreshToken, 30);
       console.log('[AuthStore] login() - Saved refreshToken to cookie');
     } else {
@@ -96,7 +77,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
     console.log('[AuthStore] login() - State updated, isAuthenticated: true');
 
-    // Conectar WebSocket após login
     try {
       await signalRClient.connect();
       console.log('[AuthStore] login() - WebSocket connected');
@@ -109,22 +89,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   logout: async () => {
     console.log('[AuthStore] logout() - Starting logout process');
-    // Desconectar WebSocket antes de fazer logout
     try {
       await signalRClient.disconnect();
       console.log('[AuthStore] logout() - WebSocket disconnected');
     } catch (error) {
       console.error('[AuthStore] logout() - Erro ao desconectar WebSocket:', error);
     }
-
-    // Limpar localStorage
+    
     localStorage.removeItem('accessToken');
     localStorage.removeItem('sessionId');
     localStorage.removeItem('authUser');
     localStorage.removeItem('refreshToken');
     console.log('[AuthStore] logout() - Cleared localStorage');
     
-    // Limpar cookie
     cookies.remove('refreshToken');
     console.log('[AuthStore] logout() - Cleared refreshToken cookie');
     
@@ -153,7 +130,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     console.log('[AuthStore] setTokens() - Updating tokens');
     localStorage.setItem('accessToken', accessToken);
     if (refreshToken) {
-      // Atualizar refreshToken no mesmo lugar onde estava
       const existingInCookie = cookies.get('refreshToken');
       if (existingInCookie) {
         cookies.set('refreshToken', refreshToken, 30);
@@ -169,7 +145,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   init: () => {
     console.log('[AuthStore] init() - Starting initialization');
-    // Verificar se já foi inicializado para evitar múltiplas chamadas
     const currentState = useAuthStore.getState();
     if (currentState.isInitialized) {
       console.log('[AuthStore] init() - Already initialized, skipping');
@@ -177,11 +152,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
     
     const accessToken = localStorage.getItem('accessToken');
-    // sessionId pode estar no localStorage ou no cookie
     const sessionId = localStorage.getItem('sessionId') || cookies.get('sessionId') || null;
     const userStr = localStorage.getItem('authUser');
     
-    // Tentar obter refreshToken de cookie primeiro, depois localStorage
     const refreshToken = cookies.get('refreshToken') || localStorage.getItem('refreshToken');
     
     console.log('[AuthStore] init() - Checking localStorage:');
@@ -190,15 +163,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     console.log('  - userStr exists:', !!userStr);
     console.log('  - refreshToken exists:', !!refreshToken);
     
-    // Se temos accessToken e userStr, considerar autenticado
-    // O interceptor do Axios vai lidar com renovação automática se o token estiver expirado
-    // (AccessToken expira em 5 minutos, RefreshToken em 1440 minutos = 24 horas)
     if (accessToken && userStr) {
-      // Verificar se o token está expirado apenas para log
       const tokenExpired = isTokenExpired(accessToken);
       console.log('[AuthStore] init() - Token expired:', tokenExpired);
       
-      // Se o token está expirado e não temos refreshToken, limpar tudo
       if (tokenExpired && !refreshToken) {
         console.log('[AuthStore] init() - Token is expired and no refreshToken, clearing storage');
         localStorage.removeItem('accessToken');
@@ -212,8 +180,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return;
       }
       
-      // Se temos refreshToken (mesmo que o accessToken esteja expirado), manter autenticado
-      // O interceptor do Axios vai renovar automaticamente na primeira requisição
       if (tokenExpired && refreshToken) {
         console.log('[AuthStore] init() - Token is expired but has refreshToken, will refresh on next API call');
       }
@@ -236,7 +202,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         get().fetchUserPreferences();
       } catch (error) {
         console.error('[AuthStore] init() - Error parsing user data:', error);
-        // Limpar dados corrompidos
         localStorage.removeItem('accessToken');
         localStorage.removeItem('sessionId');
         localStorage.removeItem('authUser');
@@ -251,7 +216,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         hasAccessToken: !!accessToken,
         hasUserStr: !!userStr
       });
-      // Mesmo sem tokens, marcar como inicializado
       set({ isInitialized: true });
       console.log('[AuthStore] init() - State set: isInitialized=true, isAuthenticated=false');
     }

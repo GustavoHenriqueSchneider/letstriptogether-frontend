@@ -15,7 +15,6 @@ interface AuthScreensProps {
   onLogin?: (email: string, password: string) => Promise<void>;
 }
 
-// Função para validar email
 const isValidEmail = (email: string): boolean => {
   if (!email) return false;
   if (email.length > 254) return false;
@@ -23,14 +22,12 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
-// Função para validar nome
 const isValidName = (name: string): boolean => {
   if (!name) return false;
   if (name.length > 150) return false;
   return name.trim().length > 0;
 };
 
-// Interface para critérios de senha
 interface PasswordCriteria {
   hasMinLength: boolean;
   hasMaxLength: boolean;
@@ -40,7 +37,6 @@ interface PasswordCriteria {
   hasSpecialChar: boolean;
 }
 
-// Função para validar senha e retornar critérios
 const validatePassword = (password: string): PasswordCriteria => {
   return {
     hasMinLength: password.length >= 8,
@@ -52,12 +48,10 @@ const validatePassword = (password: string): PasswordCriteria => {
   };
 };
 
-// Função para verificar se a senha é válida (todos os critérios atendidos)
 const isPasswordValid = (criteria: PasswordCriteria): boolean => {
   return Object.values(criteria).every(criterion => criterion === true);
 };
 
-// Componente para exibir critérios de senha
 const PasswordCriteriaList = ({ criteria, show }: { criteria: PasswordCriteria; show: boolean }) => {
   if (!show) return null;
 
@@ -102,21 +96,16 @@ export function LoginScreen({ onNavigate, onLogin }: AuthScreensProps) {
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const { showError } = useModalStore();
 
-  // Pré-carregar a imagem de fundo ANTES de renderizar
   useEffect(() => {
-    // Verificar se a imagem já está em cache
     const img = new Image();
     img.onload = () => {
       setImageLoaded(true);
     };
     img.onerror = () => {
-      // Se a imagem falhar ao carregar, ainda mostra o conteúdo
       setImageLoaded(true);
     };
-    // Definir src depois de configurar os handlers para garantir que o evento seja capturado
     img.src = backgroundImage;
     
-    // Se a imagem já estiver em cache, o onload pode não disparar
     if (img.complete) {
       setImageLoaded(true);
     }
@@ -130,7 +119,6 @@ export function LoginScreen({ onNavigate, onLogin }: AuthScreensProps) {
       try {
         await onLogin(formData.email, formData.password);
       } catch (error: any) {
-        // Erro já foi tratado no LoginPage
       } finally {
         setIsLoading(false);
       }
@@ -291,7 +279,6 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
   const { showError, showSuccess, openModal, closeModal } = useModalStore();
   const { login } = useAuthStore();
 
-  // Pré-carregar a imagem de fundo
   useEffect(() => {
     const img = new Image();
     img.onload = () => {
@@ -307,7 +294,6 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
     }
   }, []);
 
-  // Timer de cooldown para reenvio de código
   useEffect(() => {
     if (resendCooldownSeconds > 0) {
       const timer = setTimeout(() => {
@@ -317,14 +303,12 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
     }
   }, [resendCooldownSeconds]);
 
-  // Zerar cronômetro de reenvio quando voltar para o step 1
   useEffect(() => {
     if (currentStep === 1) {
       setResendCooldownSeconds(0);
     }
   }, [currentStep]);
 
-  // Etapa 1: Enviar email de confirmação
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -348,7 +332,6 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
     }
   };
 
-  // Etapa 2: Validar código de email
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -379,7 +362,6 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
     }
   };
 
-  // Etapa 3: Completar registro
   const handleStep3Submit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -409,7 +391,6 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
     try {
       await authApi.completeRegister(formData.password, formData.termsAccepted, registerToken);
       
-      // Fazer login automático após criar a conta
       try {
         const loginResponse = await authApi.login(formData.email, formData.password);
         await login(
@@ -417,13 +398,11 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
           loginResponse.accessToken,
           loginResponse.sessionId,
           loginResponse.refreshToken,
-          true // Salvar refreshToken em cookie
+          true
         );
         await useAuthStore.getState().fetchUserPreferences();
         closeModal('loading');
         
-        // O interceptor já verifica preferences e redireciona automaticamente
-        // Se não redirecionou, navegar para dashboard
         setTimeout(() => {
           if (!window.location.pathname.includes('/preferences')) {
             onNavigate('dashboard');
@@ -431,7 +410,6 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
         }, 2150);
       } catch (loginError: any) {
         closeModal('loading');
-        // Se o login falhar, redirecionar para login mesmo assim
         showError('Conta criada', 'Conta criada com sucesso, mas houve um erro ao fazer login automático. Por favor, faça login manualmente.');
         setTimeout(() => {
           onNavigate('login');
@@ -801,12 +779,10 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const { showError, showSuccess, showInfo, openModal, closeModal } = useModalStore();
 
-  // Atualizar resetToken quando initialToken mudar
   useEffect(() => {
     setResetToken(initialToken || null);
   }, [initialToken]);
 
-  // Pré-carregar a imagem de fundo
   useEffect(() => {
     const img = new Image();
     img.onload = () => {
@@ -822,7 +798,6 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
     }
   }, []);
 
-  // Timer de cooldown para reenvio de email
   useEffect(() => {
     if (cooldownSeconds > 0) {
       const timer = setTimeout(() => {
@@ -832,7 +807,6 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
     }
   }, [cooldownSeconds]);
 
-  // Etapa 1: Solicitar reset de senha (sem token na URL)
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -846,12 +820,10 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
     try {
       await authApi.requestResetPassword(email);
       closeModal('loading');
-      // Mostrar popup informativo
       showInfo(
         'E-mail enviado',
         'Caso o e-mail informado exista em nossa base, você receberá instruções para recuperação de senha.'
       );
-      // Iniciar timer de 60 segundos
       setCooldownSeconds(60);
     } catch (error: any) {
       closeModal('loading');
@@ -861,7 +833,6 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
     }
   };
 
-  // Etapa 2: Redefinir senha (com token na URL)
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -907,11 +878,9 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
     }
   };
 
-  // Se tiver token na URL, mostrar formulário de nova senha
   if (resetToken) {
     return (
       <div className="min-h-screen relative flex items-center justify-center p-4">
-        {/* Background Image with Blur */}
         <div 
           className={`absolute inset-0 bg-cover bg-center blur-sm transition-opacity duration-500 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
@@ -920,7 +889,6 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
             backgroundImage: `url(${backgroundImage})`
           }}
         />
-        {/* Dark Overlay with Gradient - sempre visível */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#0E0652]/90 via-[#130F61]/85 to-[#002F76]/90" />
         
         <div className="w-full max-w-md relative z-10">
@@ -1027,10 +995,8 @@ export function ResetPasswordScreen({ onNavigate, initialToken }: ResetPasswordS
     );
   }
 
-  // Sem token na URL, mostrar formulário de email
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4">
-      {/* Background Image with Blur */}
       <div 
         className={`absolute inset-0 bg-cover bg-center blur-sm transition-opacity duration-500 ${
           imageLoaded ? 'opacity-100' : 'opacity-0'

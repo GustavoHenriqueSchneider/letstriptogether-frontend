@@ -39,7 +39,6 @@ interface PopupProps {
   onConfirm?: () => void;
 }
 
-// Loading Popup
 export function LoadingPopup({ isOpen }: { isOpen: boolean }) {
   return (
     <Dialog open={isOpen}>
@@ -58,7 +57,6 @@ export function LoadingPopup({ isOpen }: { isOpen: boolean }) {
   );
 }
 
-// Success Popup
 export function SuccessPopup({ isOpen, onClose, title = "Sucesso!", message, onConfirm }: PopupProps & { title?: string; message: string; onConfirm?: () => void }) {
   const handleClose = () => {
     if (onConfirm) {
@@ -92,7 +90,6 @@ export function SuccessPopup({ isOpen, onClose, title = "Sucesso!", message, onC
   );
 }
 
-// Error Popup
 export function ErrorPopup({ isOpen, onClose, title = "Erro", message, onConfirm }: PopupProps & { title?: string; message: string; onConfirm?: () => void }) {
   const handleClose = () => {
     if (onConfirm) {
@@ -127,7 +124,6 @@ export function ErrorPopup({ isOpen, onClose, title = "Erro", message, onConfirm
   );
 }
 
-// Confirmation Popup
 export function ConfirmationPopup({ 
   isOpen, 
   onClose, 
@@ -186,7 +182,6 @@ export function ConfirmationPopup({
   );
 }
 
-// Logout Confirmation Popup
 export function LogoutPopup({ isOpen, onClose, onConfirm }: PopupProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -222,7 +217,6 @@ export function LogoutPopup({ isOpen, onClose, onConfirm }: PopupProps) {
   );
 }
 
-// Info Popup
 export function InfoPopup({ isOpen, onClose, title, message }: PopupProps & { title: string; message: string }) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -249,7 +243,6 @@ export function InfoPopup({ isOpen, onClose, title, message }: PopupProps & { ti
   );
 }
 
-// Delete Confirmation Popup
 export function DeleteConfirmationPopup({ 
   isOpen, 
   onClose, 
@@ -257,7 +250,6 @@ export function DeleteConfirmationPopup({
   title = "Excluir item", 
   message = "Esta ação não pode ser desfeita. Tem certeza que deseja continuar?"
 }: PopupProps & { title?: string; message?: string }) {
-  // Detectar se é "Sair do grupo" para usar ícone diferente e menor
   const isLeaveGroup = title === "Sair do grupo";
   const IconComponent = isLeaveGroup ? LogOut : Trash2;
   const iconSize = isLeaveGroup ? "w-6 h-6" : "w-8 h-8";
@@ -300,27 +292,22 @@ export function DeleteConfirmationPopup({
   );
 }
 
-// Invite Link Popup
 export function InviteLinkPopup({ isOpen, onClose, groupId }: PopupProps & { groupId: string }) {
   const [inviteLink, setInviteLink] = React.useState<string>('');
   const [isLoading, setIsLoading] = React.useState(false);
   const [linkCopied, setLinkCopied] = React.useState(false);
   const { openModal, closeModal, showError, showSuccess } = useModalStore();
 
-  // Buscar ou criar convite quando o modal abrir
   React.useEffect(() => {
     if (isOpen && groupId) {
-      // Resetar estado quando abrir um novo modal
       setInviteLink('');
       setIsLoading(true);
       loadOrCreateInvite();
     } else if (!isOpen) {
-      // Resetar estado quando fechar
       setInviteLink('');
       setIsLoading(false);
       setLinkCopied(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, groupId]);
 
   const loadOrCreateInvite = async () => {
@@ -329,21 +316,17 @@ export function InviteLinkPopup({ isOpen, onClose, groupId }: PopupProps & { gro
     openModal('loading');
     
     try {
-      // Primeiro tenta buscar o convite ativo (GET /groups/{groupId}/invitations)
       const activeInvite = await membersApi.getActiveInvitation(groupId);
       
       if (activeInvite && activeInvite.inviteLink) {
-        // Se encontrou um convite ativo, usa ele
         setInviteLink(activeInvite.inviteLink);
         setIsLoading(false);
         closeModal('loading');
         return;
       }
       
-      // Se não encontrou (retornou null/404), cria um novo (POST /groups/{groupId}/invitations)
       const newInvite = await membersApi.invite(groupId);
       
-      // Verificar se o inviteLink está presente na resposta
       if (newInvite && newInvite.inviteLink) {
         setInviteLink(newInvite.inviteLink);
         setIsLoading(false);
@@ -370,7 +353,6 @@ export function InviteLinkPopup({ isOpen, onClose, groupId }: PopupProps & { gro
         setLinkCopied(true);
         setTimeout(() => setLinkCopied(false), 2000);
       } catch (error) {
-        // Fallback para navegadores que não suportam clipboard API
         const textArea = document.createElement('textarea');
         textArea.value = inviteLink;
         textArea.style.position = 'fixed';
@@ -390,16 +372,12 @@ export function InviteLinkPopup({ isOpen, onClose, groupId }: PopupProps & { gro
     openModal('loading');
     
     try {
-      // Cancela o convite atual primeiro (se houver)
       try {
         await membersApi.cancelInvitation(groupId);
       } catch {
-        // Se não houver convite para cancelar, continua
       }
       
-      // Cria um novo convite (POST /groups/{groupId}/invitations)
       const newInvite = await membersApi.invite(groupId);
-      // Atualizar o link imediatamente para aparecer no campo
       setInviteLink(newInvite.inviteLink);
       setIsLoading(false);
       closeModal('loading');

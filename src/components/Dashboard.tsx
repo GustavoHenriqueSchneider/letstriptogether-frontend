@@ -50,11 +50,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     (state) => state.notifications.filter((notification) => !notification.read).length
   );
 
-  // Usar hook do Zustand para reagir a mudanças no isInitialized
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
-  // Carregar grupos ao montar o componente
-  // Aguardar inicialização do authStore antes de fazer chamadas
   useEffect(() => {
     console.log('[Dashboard] useEffect - isInitialized:', isInitialized);
     if (isInitialized) {
@@ -65,13 +62,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   }, [isInitialized]);
 
-  // Detectar scroll para carregar mais grupos
   useEffect(() => {
     const handleScroll = () => {
-      // Verificar se chegou ao final da página
       if (
         window.innerHeight + document.documentElement.scrollTop >=
-        document.documentElement.offsetHeight - 100 // 100px antes do fim
+        document.documentElement.offsetHeight - 100
       ) {
         if (!isLoadingMore && hasMore && !isLoading) {
           loadMoreGroups();
@@ -126,25 +121,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
   };
 
-  // ⚠️ DADOS MOCKADOS - Substituir por chamada de API
-  // TODO: Usar invitationsApi.getAll() quando API estiver pronta
-  const invitations = [
-    {
-      id: 1,
-      groupName: "Carnaval Salvador",
-      invitedBy: "Maria Santos",
-      avatar: "🎭",
-      members: 12
-    },
-    {
-      id: 2,
-      groupName: "Praia e Sol",
-      invitedBy: "João Silva",
-      avatar: "🏖️",
-      members: 5
-    }
-  ];
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'voting': return 'bg-yellow-100 text-yellow-800';
@@ -176,7 +152,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     try {
       openModal('loading');
       
-      // Verificar se o usuário possui preferências
       const userData = await usersApi.getCurrentUser();
       const hasPreferences = userData.preferences && (
         (userData.preferences.culture && userData.preferences.culture.length > 0) ||
@@ -189,7 +164,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       closeModal('loading');
       
       if (!hasPreferences) {
-        // Se não tiver preferências, mostrar modal e redirecionar
         openModal('confirmation', {
           title: 'Preferências necessárias',
           message: 'Para criar um grupo, você precisa definir suas preferências de viagem primeiro. Deseja ser redirecionado para a página de preferências?',
@@ -203,15 +177,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         return;
       }
       
-      // Se tiver preferências, criar o grupo
       openModal('loading');
       const newGroup = await groupsApi.create({
         name: groupFormData.name,
         date: groupFormData.date
       });
       
-      // Obter link de convite
-      let newInviteLink = `https://letstrip.app/invite/${Math.random().toString(36).substring(7)}`;
+      let newInviteLink = ``;
       try {
         const { membersApi } = await import('@/services/api/members');
         const invitation = await membersApi.getActiveInvitation(newGroup.id);
@@ -219,19 +191,16 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           newInviteLink = invitation.inviteLink;
         }
       } catch {
-        // Se não conseguir obter o link, usar o gerado
       }
       
       setInviteLink(newInviteLink);
       setShowCreateGroupModal(false);
       setGroupFormData({ name: '', date: '' });
       
-      // Recarregar lista de grupos (resetar para primeira página)
       setPageNumber(1);
       setHasMore(true);
       await loadGroups(1, true);
       
-      // Mostrar modal de sucesso e redirecionar para votação
       closeModal('loading');
       const { showSuccess } = useModalStore.getState();
       showSuccess('Grupo criado com sucesso!', 'Agora você pode convidar seus amigos para começar.', () => {
@@ -251,7 +220,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
     } catch (err) {
-      // Fallback para navegadores que não suportam clipboard API
       const textArea = document.createElement('textarea');
       textArea.value = inviteLink;
       document.body.appendChild(textArea);
@@ -333,7 +301,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               {groups.length > 0 && (
                 <>
                   {groups.map((group, index) => {
-                    // Define gradient colors based on index
                     const gradients = [
                       'from-blue-500 to-purple-600',
                       'from-green-500 to-teal-600',

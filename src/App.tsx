@@ -16,7 +16,6 @@ import { useAuthStore } from './store/authStore';
 import { useWebSocket } from './hooks/useWebSocket';
 
 function ModalProvider() {
-  // No Zustand, acessamos o estado diretamente do hook
   const loading = useModalStore((state) => state.loading);
   const success = useModalStore((state) => state.success);
   const error = useModalStore((state) => state.error);
@@ -41,16 +40,13 @@ function ModalProvider() {
   };
 
   const handleDelete = () => {
-    // Executar a confirmação primeiro, depois fechar
     if (deleteModal.onConfirm) {
       deleteModal.onConfirm();
     }
-    // Fechar o modal imediatamente após a confirmação
     closeModal('delete');
   };
 
   const handleDeleteClose = () => {
-    // Quando o usuário fecha sem confirmar, apenas fechar
     closeModal('delete');
   };
 
@@ -112,22 +108,17 @@ function WebSocketProvider() {
 
 export default function App() {
   console.log('[App] Component rendering');
-  // Usar o hook do Zustand para reagir a mudanças no estado
   const isInitialized = useAuthStore((state) => state.isInitialized);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
-  // Log para depuração
   React.useEffect(() => {
     console.log('[App] useEffect - State changed:');
     console.log('  - isInitialized:', isInitialized);
     console.log('  - isAuthenticated:', isAuthenticated);
   }, [isInitialized, isAuthenticated]);
   
-  // Garantir que a inicialização foi concluída antes de renderizar
   React.useEffect(() => {
     console.log('[App] useEffect - Checking initialization status:', isInitialized);
-    // Se ainda não foi inicializado, chamar init
-    // (o init() já foi chamado no main.tsx, mas garantimos aqui também)
     if (!isInitialized) {
       console.log('[App] Not initialized, calling init()...');
       useAuthStore.getState().init();
@@ -136,7 +127,6 @@ export default function App() {
     }
   }, [isInitialized]);
 
-  // Mostrar loading enquanto não estiver inicializado
   if (!isInitialized) {
     console.log('[App] Rendering: Loading screen (waiting for initialization)');
     return (

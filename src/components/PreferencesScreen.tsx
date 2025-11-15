@@ -49,7 +49,6 @@ interface UserPreferences {
 
 export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
   const [travelPrefs, setTravelPrefs] = useState({
-    // Cultura
     'culture.architecture': false,
     'culture.center': false,
     'culture.education': false,
@@ -59,17 +58,14 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
     'culture.museum': false,
     'culture.religious': false,
     
-    // Entretenimento
     'entertainment.adventure': false,
     'entertainment.attraction': false,
     'entertainment.park': false,
     'entertainment.sports': false,
     'entertainment.tour': false,
     
-    // Gastronomia
     'gastronomy': false,
     
-    // Tipo de local
     'placetype.beach': false,
     'placetype.cave': false,
     'placetype.mountain': false,
@@ -80,18 +76,14 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
     'placetype.viewpoint': false,
     'placetype.waterfall': false,
     
-    // Shopping
     'shopping': false
   });
   const [isLoading, setIsLoading] = useState(true);
   const { openModal, closeModal, showError, showSuccess } = useModalStore();
   const updateUser = useAuthStore((state) => state.updateUser);
 
-  // Usar hook do Zustand para reagir a mudanças no isInitialized
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
-  // Carregar preferências ao montar o componente
-  // Aguardar inicialização do authStore antes de fazer chamadas
   useEffect(() => {
     console.log('[PreferencesScreen] useEffect - isInitialized:', isInitialized);
     if (isInitialized) {
@@ -120,12 +112,10 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
         const prefs = response.data.preferences;
         const newPrefs: typeof travelPrefs = { ...travelPrefs };
         
-        // Marcar preferência de Restaurant (boolean)
         if (prefs.likesGastronomy) {
           newPrefs.gastronomy = true;
         }
         
-        // Marcar preferências de Culture
         if (prefs.culture && Array.isArray(prefs.culture)) {
           prefs.culture.forEach((culture: string) => {
             const key = culture.toLowerCase().startsWith('culture.') ? culture.toLowerCase() : `culture.${culture.toLowerCase()}`;
@@ -135,7 +125,6 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
           });
         }
         
-        // Marcar preferências de Entertainment
         if (prefs.entertainment && Array.isArray(prefs.entertainment)) {
           prefs.entertainment.forEach((entertainment: string) => {
             const key = entertainment.toLowerCase().startsWith('entertainment.') ? entertainment.toLowerCase() : `entertainment.${entertainment.toLowerCase()}`;
@@ -145,7 +134,6 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
           });
         }
         
-        // Marcar preferências de PlaceTypes
         if (prefs.placeTypes && Array.isArray(prefs.placeTypes)) {
           prefs.placeTypes.forEach((placeType: string) => {
             const key = placeType.toLowerCase().startsWith('placetype.') ? placeType.toLowerCase() : `placetype.${placeType.toLowerCase()}`;
@@ -155,7 +143,6 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
           });
         }
         
-        // Marcar shopping se likesShopping for true
         if (prefs.likesShopping) {
           newPrefs.shopping = true;
         }
@@ -235,9 +222,7 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
     return Object.values(travelPrefs).some(value => value === true);
   };
 
-  // Verificar se todas as categorias obrigatórias têm pelo menos uma opção selecionada
   const areAllRequiredCategoriesSelected = () => {
-    // Categorias com múltiplas opções que são obrigatórias
     const requiredCategories = [
       {
         title: 'Cultura',
@@ -253,21 +238,16 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
       }
     ];
 
-    // Verificar se cada categoria obrigatória tem pelo menos uma opção selecionada
     return requiredCategories.every(category => {
       return category.keys.some(key => travelPrefs[key as keyof typeof travelPrefs] === true);
     });
   };
 
-  // Verificar se há preferências carregadas e se todas as categorias obrigatórias estão selecionadas
   const hasLoadedPreferences = () => {
-    // Se ainda está carregando, não desabilitar
     if (isLoading) return true;
-    // Verificar se todas as categorias obrigatórias têm pelo menos uma opção selecionada
     return areAllRequiredCategoriesSelected();
   };
 
-  // Verificar se uma categoria específica tem pelo menos uma opção selecionada
   const hasCategorySelection = (categoryKeys: string[]) => {
     return categoryKeys.some(key => travelPrefs[key as keyof typeof travelPrefs] === true);
   };
@@ -281,7 +261,6 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
     openModal('loading');
     
     try {
-      // Preparar dados para enviar
       const culture: string[] = [];
       const entertainment: string[] = [];
       const placeTypes: string[] = [];
@@ -326,7 +305,6 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <Header 
         title="Configurações"
         onBack={() => onNavigate('profile')}
@@ -339,7 +317,6 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
           </div>
         ) : (
           <>
-            {/* Preferências de Viagem Section */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-[#01001D]">
@@ -348,13 +325,9 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Travel Categories */}
                 {categoryGroups.map(group => {
                   const GroupIcon = group.icon;
-                  // Verificar se esta categoria é obrigatória e se tem seleção
                   const categoryKeys = group.categories.map(cat => cat.key);
-                  // Categorias obrigatórias: Cultura, Entretenimento e Tipo de Local
-                  // Categoria "Outros" não é obrigatória
                   const isRequired = group.categories.length > 1 && 
                     group.title !== 'Outros';
                   const hasSelection = hasCategorySelection(categoryKeys);

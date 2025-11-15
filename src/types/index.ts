@@ -1,4 +1,3 @@
-// User Types
 export interface User {
   id: number;
   name: string;
@@ -15,20 +14,18 @@ export interface UserPreferences {
   placeTypes?: string[];
 }
 
-// Group Types
 export interface Group {
-  id: string; // GUID fornecido pela API
+  id: string;
   name: string;
   members: number;
   status: 'voting' | 'matched' | 'planning';
   avatar: string;
   date: string;
-  isCurrentMemberOwner?: boolean; // Indica se o usuário atual é dono do grupo
+  isCurrentMemberOwner?: boolean;
 }
 
-// Destination Types
 export interface Destination {
-  id: number | string; // Pode ser number (compatibilidade) ou string (GUID)
+  id: number | string;
   name: string;
   country: string;
   image: string;
@@ -39,7 +36,7 @@ export interface Destination {
   description: string;
   highlights: string[];
   category: string;
-  preferences?: string[]; // Categorias de preferências atendidas
+  preferences?: string[];
   attractions?: Array<{
     name: string;
     description: string;
@@ -47,18 +44,16 @@ export interface Destination {
   }>;
 }
 
-// Match Types
 export interface Match {
-  id: number | string; // Pode ser number (compatibilidade) ou string (GUID)
+  id: number | string;
   destination: Destination;
   matchPercentage: number;
   votes: number;
   totalVotes: number;
 }
 
-// Member Types
 export interface Member {
-  id: number | string; // Pode ser number (compatibilidade) ou string (GUID)
+  id: number | string;
   name: string;
   email: string;
   avatar?: string;
@@ -67,7 +62,6 @@ export interface Member {
   votesCount: number;
 }
 
-// Notification Types
 export interface Notification {
   id: string;
   type: 'invitation' | 'match' | 'vote' | 'message';
@@ -86,7 +80,6 @@ export interface Notification {
   createdAt: string;
 }
 
-// Invitation Types
 export interface Invitation {
   id: number;
   groupName: string;
@@ -95,7 +88,6 @@ export interface Invitation {
   members: number;
 }
 
-// API Types
 export interface ApiResponse<T> {
   data: T;
   message?: string;

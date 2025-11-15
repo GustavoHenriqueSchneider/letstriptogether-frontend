@@ -24,10 +24,9 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
   const [isCurrentUserOwner, setIsCurrentUserOwner] = useState(false);
   const hasHandled404 = useRef(false);
 
-  // Carregar grupo para verificar se usuário é owner
   useEffect(() => {
     let isMounted = true;
-    hasHandled404.current = false; // Resetar flag ao mudar de grupo
+    hasHandled404.current = false;
     const loadGroupInfo = async () => {
       try {
         const group = await groupsApi.getById(groupId);
@@ -36,7 +35,6 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
         }
       } catch (error: any) {
         console.error('[GroupSettingsScreen] Erro ao carregar informações do grupo:', error);
-        // Verificar se é erro 404 (grupo não encontrado) apenas uma vez
         if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
@@ -54,8 +52,7 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]); // Removido onNavigate e showError das dependências para evitar loop
+  }, [groupId]);
 
   const handleDeleteGroup = () => {
     showDeleteConfirmation(
@@ -113,7 +110,6 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header */}
       <Header 
         title="Configurações do Grupo"
         subtitle={groupName || 'Carregando...'}
@@ -152,7 +148,6 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
         </Card>
       </div>
 
-      {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
         <div className="flex items-center justify-around py-2">
           <button 

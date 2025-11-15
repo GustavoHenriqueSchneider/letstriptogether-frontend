@@ -22,7 +22,6 @@ interface PasswordCriteria {
   hasSpecialChar: boolean;
 }
 
-// Função para validar senha e retornar critérios
 const validatePassword = (password: string): PasswordCriteria => {
   return {
     hasMinLength: password.length >= 8,
@@ -34,12 +33,10 @@ const validatePassword = (password: string): PasswordCriteria => {
   };
 };
 
-// Função para verificar se a senha é válida (todos os critérios atendidos)
 const isPasswordValid = (criteria: PasswordCriteria): boolean => {
   return Object.values(criteria).every(criterion => criterion === true);
 };
 
-// Componente para exibir critérios de senha
 const PasswordCriteriaList = ({ criteria, show }: { criteria: PasswordCriteria; show: boolean }) => {
   if (!show) return null;
 
@@ -98,7 +95,6 @@ export function ChangePasswordScreen({ onNavigate }: ChangePasswordScreenProps) 
   const { logout } = useAuthStore();
   const { openModal, closeModal, showError, showSuccess } = useModalStore();
 
-  // Validações
   const isCurrentPasswordValid = formData.currentPassword.trim().length > 0;
   const isNewPasswordValid = isPasswordValid(passwordCriteria);
   const isConfirmPasswordValid = formData.newPassword === formData.confirmPassword && formData.confirmPassword.length > 0;

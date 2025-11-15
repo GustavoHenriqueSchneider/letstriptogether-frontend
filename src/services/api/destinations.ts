@@ -31,24 +31,13 @@ interface GetDestinationByIdResponse {
 
 interface VoteResponse {
   id: string;
-  // Adicione outros campos conforme necessário
 }
 
-/**
- * Serviço de Destinos
- * 
- * Integrado com a API pública: /api/v1/destinations e /api/v1/groups/:groupId/destination-votes
- */
 export const destinationsApi = {
-  /**
-   * Buscar destino por ID
-   * GET /api/v1/destinations/:destinationId
-   */
   async getById(destinationId: string | number): Promise<Destination> {
     const id = typeof destinationId === 'number' ? destinationId.toString() : destinationId;
     const response = await apiClient.get<GetDestinationByIdResponse>(`/destinations/${id}`);
 
-    // Transformar resposta da API para formato do frontend
     const attractions = response.data.attractions || [];
     const highlights = attractions.map(attr => attr.name);
     
@@ -73,11 +62,6 @@ export const destinationsApi = {
     };
   },
 
-  /**
-   * Buscar destinos não votados de um grupo
-   * GET /api/v1/groups/:groupId/destinations-not-voted
-   * Retorna lista de IDs e informações de paginação
-   */
   async getNotVotedByGroup(
     groupId: string | number, 
     pageNumber = 1, 
@@ -89,17 +73,15 @@ export const destinationsApi = {
       { params: { pageNumber, pageSize } }
     );
 
-    // Buscar detalhes de cada destino
     const destinationPromises = response.data.data.map(async (item) => {
       try {
         const destination = await this.getById(item.id);
         return {
           ...destination,
-          id: item.id // Manter o ID original (GUID)
+          id: item.id
         };
       } catch (error) {
         console.error(`Erro ao buscar destino ${item.id}:`, error);
-        // Retornar destino básico em caso de erro
         return {
           id: item.id,
           name: 'Destino',
@@ -120,7 +102,6 @@ export const destinationsApi = {
 
     const destinations = await Promise.all(destinationPromises);
     
-    // Verificar se há mais páginas
     const totalHits = response.data.hits || 0;
     const currentPageItems = response.data.data.length;
     const hasMore = (pageNumber * pageSize) < totalHits;
@@ -132,10 +113,6 @@ export const destinationsApi = {
     };
   },
 
-  /**
-   * Votar em um destino
-   * POST /api/v1/groups/:groupId/destination-votes
-   */
   async vote(
     groupId: string | number, 
     destinationId: string | number, 
@@ -155,10 +132,6 @@ export const destinationsApi = {
     return response.data;
   },
 
-  /**
-   * Atualizar voto em um destino
-   * PUT /api/v1/groups/:groupId/destination-votes/:destinationVoteId
-   */
   async updateVote(
     groupId: string | number,
     destinationVoteId: string | number,
@@ -172,10 +145,6 @@ export const destinationsApi = {
     });
   },
 
-  /**
-   * Listar todos os votos do usuário em um grupo
-   * GET /api/v1/groups/:groupId/destination-votes
-   */
   async getVotes(groupId: string | number, pageNumber = 1, pageSize = 10) {
     const id = typeof groupId === 'number' ? groupId.toString() : groupId;
     const response = await apiClient.get(`/groups/${id}/destination-votes`, {

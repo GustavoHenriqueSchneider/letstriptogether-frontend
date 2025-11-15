@@ -20,22 +20,18 @@ export default function LoginPage() {
     try {
       const response = await authApi.login(email, password);
       
-      // Salvar tokens e dados do usuário
-      // refreshTokenInCookie = true para salvar em cookie, false para localStorage
       await login(
         response.user,
         response.accessToken,
         response.sessionId,
         response.refreshToken,
-        true // Salvar refreshToken em cookie
+        true
       );
 
       await useAuthStore.getState().fetchUserPreferences();
       
       closeModal('loading');
       
-      // O interceptor já verifica preferences e redireciona automaticamente
-      // Se não redirecionou, navegar para dashboard
       setTimeout(() => {
         if (!window.location.pathname.includes('/preferences')) {
           navigate('/dashboard');

@@ -47,7 +47,6 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
   const { openModal, closeModal, showError } = useModalStore();
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
-  // Carregar dados do usuário
   useEffect(() => {
     if (isInitialized) {
       loadUserData();
@@ -72,7 +71,6 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
   };
 
   const handleInputChange = (value: string) => {
-    // Limitar a 150 caracteres (mesmo limite do cadastro)
     if (value.length <= 150) {
       setFormData(prev => ({
         ...prev,
@@ -82,7 +80,6 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
   };
 
   const handleSave = async () => {
-    // Validar nome não vazio
     const trimmedName = formData.name.trim();
     if (!trimmedName) {
       showError('Nome inválido', 'O nome não pode estar vazio');
@@ -99,11 +96,9 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
       await usersApi.updateCurrentUser({ name: trimmedName });
       closeModal('loading');
       
-      // Atualizar o estado local com o nome trimado
       setFormData(prev => ({ ...prev, name: trimmedName }));
       setOriginalData(prev => ({ ...prev, name: trimmedName }));
       
-      // Atualizar o usuário no authStore também
       const { updateUser } = useAuthStore.getState();
       updateUser({ name: trimmedName });
       

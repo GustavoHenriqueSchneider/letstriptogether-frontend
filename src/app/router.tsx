@@ -3,7 +3,6 @@ import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
 import type { UserPreferences } from '@/types';
 
-// Lazy loading das páginas
 const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.default })));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage').then(m => ({ default: m.default })));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPasswordPage').then(m => ({ default: m.default })));
@@ -32,7 +31,6 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Componente de rota protegida
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   console.log('[ProtectedRoute] Component rendering');
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
@@ -40,7 +38,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const user = useAuthStore((state) => state.user);
   const preferencesLoaded = useAuthStore((state) => state.preferencesLoaded);
   
-  // Log para depuração
   React.useEffect(() => {
     console.log('[ProtectedRoute] useEffect - State changed:');
     console.log('  - isInitialized:', isInitialized);
@@ -48,7 +45,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     console.log('  - Current pathname:', window.location.pathname);
   }, [isInitialized, isAuthenticated]);
   
-  // Aguardar inicialização antes de verificar autenticação
   if (!isInitialized) {
     console.log('[ProtectedRoute] Rendering: Loading screen (waiting for initialization)');
     return (
@@ -101,7 +97,6 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Componente para redirecionar /groups/:groupId para /groups/:groupId/vote
 function GroupRedirect() {
   const pathParts = window.location.pathname.split('/');
   const groupId = pathParts[2];
