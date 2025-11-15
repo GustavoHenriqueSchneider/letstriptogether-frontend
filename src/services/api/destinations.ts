@@ -11,8 +11,15 @@ interface GetNotVotedDestinationsResponse {
 }
 
 interface GetDestinationByIdResponse {
+  id: string;
   place: string;
   description: string;
+  image?: string;
+  country?: string;
+  price?: string;
+  duration?: string;
+  temperature?: string;
+  rating?: number;
   attractions: Array<{
     name: string;
     description: string;
@@ -46,14 +53,14 @@ export const destinationsApi = {
     const highlights = attractions.map(attr => attr.name);
     
     return {
-      id: 0, // Será preenchido com o ID real se necessário
+      id: response.data.id ?? destinationId,
       name: response.data.place,
-      country: '', // Não disponível na API
-      image: `https://images.unsplash.com/photo-${Math.random().toString(36).substring(7)}?w=1080`, // Placeholder
-      price: '', // Não disponível na API
-      duration: '', // Não disponível na API
-      temperature: '', // Não disponível na API
-      rating: 0, // Não disponível na API
+      country: response.data.country || '',
+      image: response.data.image || '',
+      price: response.data.price || '',
+      duration: response.data.duration || '',
+      temperature: response.data.temperature || '',
+      rating: response.data.rating ?? 0,
       description: response.data.description,
       highlights: highlights,
       category: attractions[0]?.category || '',

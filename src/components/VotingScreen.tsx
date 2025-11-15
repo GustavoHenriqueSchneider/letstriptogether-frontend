@@ -25,6 +25,7 @@ import { destinationsApi } from '@/services/api/destinations';
 import { groupsApi } from '@/services/api/groups';
 import type { Destination } from '@/types';
 import { getPreferenceLabel } from '@/utils/preferenceLabels';
+import { buildBase64ImageUrl } from '@/utils/image';
 
 interface VotingScreenProps {
   groupId: string;
@@ -158,6 +159,7 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
   };
 
   const currentDestination = destinations[currentIndex];
+  const currentDestinationImage = buildBase64ImageUrl(currentDestination?.image);
   const remainingCards = destinations.length - currentIndex;
   const votedCount = Object.keys(votes).length;
   const totalDestinations = destinations.length;
@@ -409,9 +411,19 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
             onMouseUp={handleMouseEnd}
             onMouseLeave={handleMouseEnd}
           >
-            <div 
-              className="absolute inset-0 bg-black"
-            />
+            <div className="absolute inset-0">
+              {currentDestinationImage ? (
+                <img
+                  src={currentDestinationImage}
+                  alt={currentDestination.name}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="w-full h-full bg-black" />
+              )}
+              <div className="absolute inset-0 bg-black/30" />
+            </div>
             
             {/* Voting indicators */}
             <div className={`absolute top-8 left-8 transform rotate-12 ${dragOffset > 50 ? 'opacity-100' : 'opacity-0'} transition-opacity`}>
@@ -428,7 +440,7 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
               </Badge>
             </div>
 
-            <CardContent className="absolute bottom-0 left-0 right-0 p-6 bg-white/90 backdrop-blur-sm">
+            <CardContent className="absolute left-4 right-4 bottom-4 p-5 bg-white/70 border border-white/50 rounded-3xl backdrop-blur-md shadow-xl">
               <div className="mb-3">
                 <h2 className="text-2xl font-bold mb-2 text-[#01001D]">{currentDestination.name}</h2>
                 <p className="text-sm text-gray-700 line-clamp-3">

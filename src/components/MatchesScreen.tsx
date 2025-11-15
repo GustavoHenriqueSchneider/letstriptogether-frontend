@@ -20,6 +20,7 @@ import { getPreferenceLabel } from '@/utils/preferenceLabels';
 import { matchesApi } from '@/services/api/matches';
 import { groupsApi } from '@/services/api/groups';
 import type { Match } from '@/types';
+import { buildBase64ImageUrl } from '@/utils/image';
 
 interface MatchesScreenProps {
   groupId: string;
@@ -224,92 +225,104 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
             </CardHeader>
             <CardContent className="space-y-3">
               <>
-                {matches.map((match) => (
-                  <div 
-                    key={match.id} 
-                    className={`p-3 bg-gray-50 rounded-lg transition-all ${
-                      selectedMatch === match.id ? 'ring-2 ring-[#6496D8] shadow-lg' : ''
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex space-x-4 flex-1 items-center">
-                        <div 
-                          className="w-24 h-24 bg-black rounded-lg flex-shrink-0"
-                        />
-                        
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-[#01001D] mb-1">{match.destination.name}</h3>
-                          <p className="text-sm text-gray-600 line-clamp-2">{match.destination.description}</p>
+                {matches.map((match) => {
+                  const destinationImage = buildBase64ImageUrl(match.destination.image);
+                  return (
+                    <div 
+                      key={match.id} 
+                      className={`p-3 bg-gray-50 rounded-lg transition-all ${
+                        selectedMatch === match.id ? 'ring-2 ring-[#6496D8] shadow-lg' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex space-x-4 flex-1 items-center">
+                          <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
+                            {destinationImage ? (
+                              <img
+                                src={destinationImage}
+                                alt={match.destination.name}
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-300" />
+                            )}
+                          </div>
+                          
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-[#01001D] mb-1">{match.destination.name}</h3>
+                            <p className="text-sm text-gray-600 line-clamp-2">{match.destination.description}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center space-x-2 ml-2">
+                          <button
+                            onClick={() => setSelectedMatch(selectedMatch === match.id ? null : match.id)}
+                            className="p-1 hover:bg-blue-100 hover:border-2 hover:border-[#6496D8] rounded-full transition-all duration-200 text-gray-500 hover:text-[#6496D8] hover:scale-110 border-2 border-transparent"
+                            aria-label={selectedMatch === match.id ? "Recolher" : "Expandir"}
+                          >
+                            {selectedMatch === match.id ? (
+                              <ChevronDown className="h-5 w-5" />
+                            ) : (
+                              <ChevronRight className="h-5 w-5" />
+                            )}
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveMatch(match.id, match.destination.name);
+                            }}
+                            className="p-1 hover:bg-blue-100 hover:border-2 hover:border-[#6496D8] rounded-full transition-all duration-200 text-gray-500 hover:text-[#6496D8] hover:scale-110 border-2 border-transparent"
+                            aria-label="Remover match"
+                          >
+                            <X className="h-5 w-5" />
+                          </button>
                         </div>
                       </div>
 
-                  <div className="flex items-center space-x-2 ml-2">
-                    <button
-                      onClick={() => setSelectedMatch(selectedMatch === match.id ? null : match.id)}
-                      className="p-1 hover:bg-blue-100 hover:border-2 hover:border-[#6496D8] rounded-full transition-all duration-200 text-gray-500 hover:text-[#6496D8] hover:scale-110 border-2 border-transparent"
-                      aria-label={selectedMatch === match.id ? "Recolher" : "Expandir"}
-                    >
-                      {selectedMatch === match.id ? (
-                        <ChevronDown className="h-5 w-5" />
-                      ) : (
-                        <ChevronRight className="h-5 w-5" />
-                      )}
-                    </button>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemoveMatch(match.id, match.destination.name);
-                      }}
-                      className="p-1 hover:bg-blue-100 hover:border-2 hover:border-[#6496D8] rounded-full transition-all duration-200 text-gray-500 hover:text-[#6496D8] hover:scale-110 border-2 border-transparent"
-                      aria-label="Remover match"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {selectedMatch === match.id && (
-                  <div className="mt-4 pt-4 border-t space-y-4">
-                    {/* Preferências atendidas */}
-                    {match.destination.preferences && match.destination.preferences.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {Array.from(new Set(match.destination.preferences)).map((pref, index) => (
-                            <Badge key={index} className="bg-[#6496D8] text-white">
-                              {getPreferenceLabel(pref as string)}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Atrações */}
-                    {match.destination.attractions && match.destination.attractions.length > 0 && (
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#01001D] mb-3">Atrações do destino:</h4>
-                        <div className="space-y-3">
-                          {match.destination.attractions.map((attraction, index) => (
-                            <div key={index} className="bg-white p-3 rounded-lg border border-gray-200">
-                              <div className="flex items-center justify-between mb-1">
-                                <h5 className="font-medium text-[#01001D]">{attraction.name}</h5>
-                                {attraction.category && (
-                                  <Badge variant="outline" className="text-xs">
-                                    {getPreferenceLabel(attraction.category)}
+                      {selectedMatch === match.id && (
+                        <div className="mt-4 pt-4 border-t space-y-4">
+                          {/* Preferências atendidas */}
+                          {match.destination.preferences && match.destination.preferences.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
+                              <div className="flex flex-wrap gap-2">
+                                {Array.from(new Set(match.destination.preferences)).map((pref, index) => (
+                                  <Badge key={index} className="bg-[#6496D8] text-white">
+                                    {getPreferenceLabel(pref as string)}
                                   </Badge>
-                                )}
+                                ))}
                               </div>
-                              <p className="text-sm text-gray-600">{attraction.description}</p>
                             </div>
-                          ))}
+                          )}
+
+                          {/* Atrações */}
+                          {match.destination.attractions && match.destination.attractions.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-[#01001D] mb-3">Atrações do destino:</h4>
+                              <div className="space-y-3">
+                                {match.destination.attractions.map((attraction, index) => (
+                                  <div key={index} className="bg-white p-3 rounded-lg border border-gray-200">
+                                    <div className="flex items-center justify-between mb-1">
+                                      <h5 className="font-medium text-[#01001D]">{attraction.name}</h5>
+                                      {attraction.category && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {getPreferenceLabel(attraction.category)}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-gray-600">{attraction.description}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
                 
                 {/* Loading indicator ao carregar mais */}
                 {isLoadingMore && (

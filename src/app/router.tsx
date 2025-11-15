@@ -15,6 +15,7 @@ const PreferencesPage = lazy(() => import('@/pages/preferences/PreferencesPage')
 const NotificationsPage = lazy(() => import('@/pages/notifications/NotificationsPage').then(m => ({ default: m.default })));
 const ProfilePage = lazy(() => import('@/pages/profile/ProfilePage').then(m => ({ default: m.default })));
 const TermsOfUsePage = lazy(() => import('@/pages/legal/TermsOfUsePage').then(m => ({ default: m.default })));
+const PrivacyPolicyPage = lazy(() => import('@/pages/legal/PrivacyPolicyPage').then(m => ({ default: m.default })));
 const ChangePasswordPage = lazy(() => import('@/pages/profile/ChangePasswordPage').then(m => ({ default: m.default })));
 const GroupSettingsPage = lazy(() => import('@/pages/settings/GroupSettingsPage').then(m => ({ default: m.default })));
 const LandingPage = lazy(() => import('@/pages/LandingPage').then(m => ({ default: m.default })));
@@ -244,6 +245,14 @@ export const router = createBrowserRouter([
     element: (
       <Suspense fallback={<LoadingFallback />}>
         <TermsOfUsePage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/privacy-policy',
+    element: (
+      <Suspense fallback={<LoadingFallback />}>
+        <PrivacyPolicyPage />
       </Suspense>
     ),
   },
