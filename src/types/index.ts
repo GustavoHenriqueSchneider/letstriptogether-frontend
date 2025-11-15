@@ -23,7 +23,7 @@ export interface Group {
   status: 'voting' | 'matched' | 'planning';
   avatar: string;
   date: string;
-  isOwner?: boolean; // Indica se o usuário atual é dono do grupo
+  isCurrentMemberOwner?: boolean; // Indica se o usuário atual é dono do grupo
 }
 
 // Destination Types

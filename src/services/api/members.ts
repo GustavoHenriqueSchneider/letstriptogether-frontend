@@ -11,7 +11,7 @@ interface GetOtherGroupMembersResponse {
 
 interface GetGroupMemberByIdResponse {
   name: string;
-  isOwner: boolean;
+  isCurrentMemberOwner: boolean;
   createdAt: string;
   updatedAt?: string;
 }
@@ -103,7 +103,7 @@ export const membersApi = {
       name: response.data.name,
       email: '', // API não retorna email
       avatar: undefined,
-      role: response.data.isOwner ? 'owner' as const : 'member' as const,
+      role: response.data.isCurrentMemberOwner ? 'owner' as const : 'member' as const,
       joinedAt: response.data.createdAt,
       votesCount: 0
     };

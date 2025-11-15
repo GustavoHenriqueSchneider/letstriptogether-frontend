@@ -39,7 +39,7 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
     const loadGroupInfo = async () => {
       try {
         const group = await groupsApi.getById(groupId);
-        setIsCurrentUserOwner(group.isOwner || false);
+        setIsCurrentUserOwner(group.isCurrentMemberOwner || false);
       } catch (error) {
         console.error('[MembersScreen] Erro ao carregar informações do grupo:', error);
       }

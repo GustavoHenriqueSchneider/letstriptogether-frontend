@@ -14,7 +14,7 @@ interface GetGroupByIdResponse {
   tripExpectedDate: string;
   createdAt: string;
   updatedAt?: string;
-  isOwner: boolean;
+  isCurrentMemberOwner: boolean;
   preferences?: {
     likesShopping: boolean;
     food: string[];
@@ -127,7 +127,7 @@ export const groupsApi = {
       status: 'voting' as const,
       avatar: '👥',
       date: new Date(response.data.tripExpectedDate).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
-      isOwner: response.data.isOwner
+      isCurrentMemberOwner: response.data.isCurrentMemberOwner
     };
   },
 

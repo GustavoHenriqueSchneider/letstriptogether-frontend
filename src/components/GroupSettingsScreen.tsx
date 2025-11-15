@@ -32,7 +32,7 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
       try {
         const group = await groupsApi.getById(groupId);
         if (isMounted) {
-          setIsCurrentUserOwner(group.isOwner || false);
+          setIsCurrentUserOwner(group.isCurrentMemberOwner || false);
         }
       } catch (error: any) {
         console.error('[GroupSettingsScreen] Erro ao carregar informações do grupo:', error);
