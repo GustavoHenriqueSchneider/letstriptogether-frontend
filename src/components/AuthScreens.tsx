@@ -734,6 +734,19 @@ export function RegisterScreen({ onNavigate }: AuthScreensProps) {
                         }}
                       >
                         Termos de Uso
+                      </a>
+                      e a
+                      <a 
+                        href="/privacy-policy"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#6496D8] hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open('/privacy-policy', '_blank', 'noopener,noreferrer');
+                        }}
+                      >
+                        Política de Privacidade
                       </a>.
                     </Label>
                 </div>
