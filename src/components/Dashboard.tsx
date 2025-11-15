@@ -26,6 +26,7 @@ import { groupsApi } from '@/services/api/groups';
 import { usersApi } from '@/services/api/users';
 import { useModalStore } from '@/store/modalStore';
 import { useAuthStore } from '@/store/authStore';
+import { useNotificationsStore } from '@/store/notificationsStore';
 import type { Group } from '@/types';
 
 interface DashboardProps {
@@ -45,6 +46,9 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const [hasMore, setHasMore] = useState(true);
   const pageSize = 10;
   const { openModal, closeModal, showError } = useModalStore();
+  const unreadNotifications = useNotificationsStore(
+    (state) => state.notifications.filter((notification) => !notification.read).length
+  );
 
   // Usar hook do Zustand para reagir a mudanças no isInitialized
   const isInitialized = useAuthStore((state) => state.isInitialized);
@@ -277,7 +281,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 className="relative p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all duration-200"
               >
                 <Bell className="h-5 w-5" />
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center animate-pulse">3</span>
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 rounded-full text-[10px] font-semibold text-white flex items-center justify-center shadow-lg">
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </span>
+                )}
               </button>
               <button 
                 onClick={() => onNavigate('profile')}

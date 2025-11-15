@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Header } from './Header';
@@ -8,29 +7,12 @@ import {
   Bell, 
   Heart, 
   Users, 
-  Star, 
-  Check
+  Star
 } from 'lucide-react';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 interface NotificationsScreenProps {
   onNavigate: (screen: string) => void;
-}
-
-interface Notification {
-  id: number;
-  type: 'vote' | 'match' | 'invite' | 'reminder' | 'system';
-  title: string;
-  message: string;
-  time: string;
-  read: boolean;
-  avatar?: string;
-  groupName?: string;
-  actionRequired?: boolean;
-  actions?: Array<{
-    label: string;
-    type: 'accept' | 'reject' | 'view';
-    variant?: 'default' | 'outline';
-  }>;
 }
 
 const formatDateTime = (timestamp: string) => {
@@ -49,7 +31,14 @@ const formatDateTime = (timestamp: string) => {
 };
 
 export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const notifications = useNotificationsStore((state) => state.notifications);
+  const markAllAsRead = useNotificationsStore((state) => state.markAllAsRead);
+
+  useEffect(() => {
+    if (notifications.length > 0) {
+      markAllAsRead();
+    }
+  }, [notifications.length, markAllAsRead]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -84,27 +73,10 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
     }
   };
 
-  const markAsRead = (id: number) => {
-    setNotifications(prev => prev.map(notif => 
-      notif.id === id ? { ...notif, read: true } : notif
-    ));
-  };
-
-  const handleAction = (notificationId: number, actionType: string) => {
-    // Handle actions like accept/reject invites
-    if (actionType === 'accept' || actionType === 'reject') {
-      setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
-    } else if (actionType === 'view') {
-      markAsRead(notificationId);
-      onNavigate('dashboard');
-    }
-  };
-
-  const unreadCount = notifications.filter(n => !n.read).length;
   const sortedNotifications = useMemo(
     () =>
       [...notifications].sort(
-        (a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
     [notifications]
   );
@@ -159,6 +131,18 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
               const Icon = getIcon(notification.type);
               const iconColor = getIconColor(notification.type);
               const typeBadge = getTypeBadge(notification.type);
+              const fallbackTitle =
+                notification.title ??
+                (notification.destinationName
+                  ? `Novo match: ${notification.destinationName}`
+                  : notification.groupName
+                    ? `Atualização em ${notification.groupName}`
+                    : 'Nova notificação');
+              const fallbackMessage =
+                notification.message ??
+                (notification.destinationName && notification.groupName
+                  ? `${notification.groupName} escolheu ${notification.destinationName} como novo destino.`
+                  : 'Abra para ver os detalhes desta atualização.');
               
               return (
                 <Card 
@@ -186,7 +170,7 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between mb-1">
                           <h3 className={`font-medium ${!notification.read ? 'text-[#01001D]' : 'text-gray-900'}`}>
-                            {notification.title}
+                            {fallbackTitle}
                           </h3>
                           <div className="flex items-center space-x-2 ml-2">
                             <Badge className={`text-xs ${typeBadge.color}`}>
@@ -196,36 +180,13 @@ export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
                         </div>
                         
                         <p className={`text-sm mb-2 ${!notification.read ? 'text-gray-700' : 'text-gray-600'}`}>
-                          {notification.message}
+                          {fallbackMessage}
                         </p>
 
                         <div className="flex items-center justify-between">
-                        <div className="flex items-center text-xs text-gray-500">
-                          <span>{formatDateTime(notification.time)}</span>
-                        </div>
-
-                          {notification.actionRequired && notification.actions && (
-                            <div className="flex space-x-2">
-                              {notification.actions.map((action, index) => (
-                                <Button
-                                  key={index}
-                                  size="sm"
-                                  variant={action.variant === 'outline' ? 'outline' : 'default'}
-                                  className={
-                                    action.variant === 'outline'
-                                      ? 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                      : 'bg-[#0E0652] hover:bg-[#130F61] text-white'
-                                  }
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAction(notification.id, action.type);
-                                  }}
-                                >
-                                  {action.label}
-                                </Button>
-                              ))}
-                            </div>
-                          )}
+                          <div className="flex items-center text-xs text-gray-500">
+                            <span>{formatDateTime(notification.createdAt)}</span>
+                          </div>
                         </div>
                       </div>
                     </div>

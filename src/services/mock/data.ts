@@ -133,7 +133,7 @@ export const mockMembers: Member[] = [
 // MOCK: Notificações
 export const mockNotifications: Notification[] = [
   {
-    id: 1,
+    id: '1',
     type: 'invitation',
     title: 'Novo convite',
     message: 'Você foi convidado para o grupo "Carnaval Salvador"',
@@ -141,7 +141,7 @@ export const mockNotifications: Notification[] = [
     createdAt: '2024-01-20T10:00:00Z'
   },
   {
-    id: 2,
+    id: '2',
     type: 'match',
     title: 'Novo match!',
     message: 'Seu grupo encontrou um destino perfeito: Santorini',

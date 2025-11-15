@@ -4,6 +4,7 @@ import { signalRClient } from '@/services/websocket/signalrClient';
 import { useAuthStore } from '@/store/authStore';
 import { useModalStore } from '@/store/modalStore';
 import type { Notification } from '@/types';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 const PUBLIC_ROUTES = ['/', '/login', '/register', '/terms-of-use', '/about-us'];
 
@@ -13,6 +14,7 @@ const PUBLIC_ROUTES = ['/', '/login', '/register', '/terms-of-use', '/about-us']
 export function useWebSocket() {
   const { isAuthenticated } = useAuthStore();
   const { showSuccess, showError } = useModalStore();
+  const addNotification = useNotificationsStore((state) => state.addNotification);
   const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
 
   useEffect(() => {
@@ -51,14 +53,43 @@ export function useWebSocket() {
   // Handler para notificações
   const handleNotification = useCallback((notification: Notification) => {
     console.log('Nova notificação recebida:', notification);
-    
-    // Mostrar notificação ao usuário (opcional)
-    if (notification.type === 'match') {
-      showSuccess(`Novo match encontrado: ${notification.title}`);
-    } else if (notification.type === 'invitation') {
-      showSuccess(`Você recebeu um convite: ${notification.title}`);
-    }
-  }, [showSuccess]);
+
+    const normalizedType = (notification.type ?? 'match') as Notification['type'];
+    const createdAt = notification.createdAt ?? new Date().toISOString();
+
+    const destination = notification.destinationName;
+    const groupName = notification.groupName;
+
+    const computedTitle =
+      notification.title ??
+      (normalizedType === 'match'
+        ? destination
+          ? `Novo match: ${destination}`
+          : groupName
+            ? `Novo match em ${groupName}`
+            : 'Novo match encontrado'
+        : 'Nova notificação');
+
+    const computedMessage =
+      notification.message ??
+      (normalizedType === 'match'
+        ? destination && groupName
+          ? `${groupName} confirmou ${destination} como destino preferido.`
+          : 'Seu grupo recebeu um novo match.'
+        : 'Você tem uma nova atualização.');
+
+    addNotification({
+      id: notification.id,
+      type: normalizedType,
+      title: computedTitle,
+      message: computedMessage,
+      groupName,
+      destinationName: destination,
+      avatar: notification.avatar,
+      createdAt,
+    });
+
+  }, [addNotification, showSuccess]);
 
   // Handler para atualizações de grupo
   const handleGroupUpdated = useCallback((group: any) => {
@@ -74,7 +105,9 @@ export function useWebSocket() {
 
   // Registrar handlers
   useEffect(() => {
-    if (isAuthenticated && signalRClient.isConnected()) {
+    const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
+
+    if (isAuthenticated && !isPublicRoute) {
       signalRClient.onNotificationReceived(handleNotification);
       signalRClient.onGroupUpdated(handleGroupUpdated);
       signalRClient.onMatchUpdated(handleMatchUpdated);
@@ -84,7 +117,7 @@ export function useWebSocket() {
     return () => {
       signalRClient.removeAllHandlers();
     };
-  }, [isAuthenticated, handleNotification, handleGroupUpdated, handleMatchUpdated]);
+  }, [isAuthenticated, currentPath, handleNotification, handleGroupUpdated, handleMatchUpdated]);
 
   return {
     isConnected: signalRClient.isConnected(),

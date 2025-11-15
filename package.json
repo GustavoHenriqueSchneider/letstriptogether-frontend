@@ -2,6 +2,10 @@
       "name": "Let's Trip Together - Frontend",
       "version": "0.1.0",
       "private": true,
+      "scripts": {
+            "dev": "vite",
+            "build": "vite build"
+      },
       "dependencies": {
             "@microsoft/signalr": "^9.0.6",
             "@radix-ui/react-accordion": "^1.2.3",
@@ -54,9 +58,5 @@
             "@types/node": "^20.10.0",
             "@vitejs/plugin-react-swc": "^3.10.2",
             "vite": "6.3.5"
-      },
-      "scripts": {
-            "dev": "vite",
-            "build": "vite build"
       }
 }

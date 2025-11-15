@@ -69,10 +69,19 @@ export interface Member {
 
 // Notification Types
 export interface Notification {
-  id: number;
+  id: string;
   type: 'invitation' | 'match' | 'vote' | 'message';
-  title: string;
-  message: string;
+  title?: string;
+  message?: string;
+  groupName?: string;
+  destinationName?: string;
+  avatar?: string;
+  actionRequired?: boolean;
+  actions?: Array<{
+    label: string;
+    type: 'accept' | 'reject' | 'view';
+    variant?: 'default' | 'outline';
+  }>;
   read: boolean;
   createdAt: string;
 }

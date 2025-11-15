@@ -30,7 +30,7 @@ export const notificationsApi = {
    * Marcar notificação como lida
    * TODO: Criar endpoint na API
    */
-  async markAsRead(id: number): Promise<void> {
+  async markAsRead(id: string): Promise<void> {
     // A API pública não tem endpoint de notificações
     // TODO: Implementar quando tiver endpoint
     console.log(`Mark notification ${id} as read`);
