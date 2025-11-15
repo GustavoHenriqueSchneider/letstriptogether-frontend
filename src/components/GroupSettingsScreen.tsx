@@ -34,7 +34,6 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
           setIsCurrentUserOwner(group.isCurrentMemberOwner || false);
         }
       } catch (error: any) {
-        console.error('[GroupSettingsScreen] Erro ao carregar informações do grupo:', error);
         if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(

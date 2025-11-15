@@ -40,7 +40,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
         const group = await groupsApi.getById(groupId);
         setIsCurrentUserOwner(group.isCurrentMemberOwner || false);
       } catch (error) {
-        console.error('[MembersScreen] Erro ao carregar informações do grupo:', error);
       }
     };
     loadGroupInfo();
@@ -57,7 +56,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
           await loadMembers(1, true);
         }
       } catch (error: any) {
-        console.error('[MembersScreen] Erro ao verificar grupo:', error);
         if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(
@@ -115,7 +113,6 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
       setCurrentPage(page);
       setAllMembersLoaded(!result.hasMore);
     } catch (error: any) {
-      console.error('[MembersScreen] Erro ao carregar membros:', error);
       if (isInitial) {
         if ([404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;

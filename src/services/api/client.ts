@@ -16,8 +16,6 @@ apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const { accessToken, sessionId, isInitialized } = useAuthStore.getState();
     
-    console.log('[API Client] Request interceptor - isInitialized:', isInitialized, 'hasAccessToken:', !!accessToken, 'url:', config.url);
-    
     if (isInitialized) {
       if (accessToken && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${accessToken}`;
@@ -26,8 +24,6 @@ apiClient.interceptors.request.use(
       if (sessionId && !config.headers['X-Session-Id']) {
         config.headers['X-Session-Id'] = sessionId;
       }
-    } else {
-      console.warn('[API Client] Request made before initialization! URL:', config.url);
     }
     
     return config;
@@ -56,13 +52,10 @@ const processQueue = (error: any, token: string | null = null) => {
 
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('[API Client] Response interceptor - Status:', response.status, 'URL:', response.config.url);
     if (response.config.url?.includes('/users/me') && response.data) {
       const preferences = response.data.preferences;
-      console.log('[API Client] Response interceptor - /users/me response, preferences:', preferences);
       
       if (preferences === null && !window.location.pathname.includes('/preferences')) {
-        console.log('[API Client] Response interceptor - Preferences is null, redirecting to /preferences');
         setTimeout(() => {
           window.location.href = '/preferences';
         }, 100);
@@ -80,10 +73,8 @@ apiClient.interceptors.response.use(
     
     if (error.response?.status === 401 && !originalRequest._retry) {
       const { isInitialized } = useAuthStore.getState();
-      console.log('[API Client] 401 error - isInitialized:', isInitialized, 'url:', originalRequest.url);
       
       if (!isInitialized) {
-        console.log('[API Client] 401 error before initialization, rejecting without refresh');
         return Promise.reject(error);
       }
       
@@ -149,16 +140,11 @@ apiClient.interceptors.response.use(
         if (!isResetPasswordRequest) {
           const { logout, isInitialized } = useAuthStore.getState();
           
-          console.log('[API Client] Refresh failed - isInitialized:', isInitialized);
-          
           if (isInitialized) {
-            console.log('[API Client] Logging out and redirecting to /login');
             await logout();
             setTimeout(() => {
               window.location.href = '/login';
             }, 100);
-          } else {
-            console.log('[API Client] Not initialized yet, skipping logout/redirect');
           }
         }
         

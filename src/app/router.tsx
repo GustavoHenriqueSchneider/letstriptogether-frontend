@@ -32,21 +32,15 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  console.log('[ProtectedRoute] Component rendering');
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isInitialized = useAuthStore((state) => state.isInitialized);
   const user = useAuthStore((state) => state.user);
   const preferencesLoaded = useAuthStore((state) => state.preferencesLoaded);
   
   React.useEffect(() => {
-    console.log('[ProtectedRoute] useEffect - State changed:');
-    console.log('  - isInitialized:', isInitialized);
-    console.log('  - isAuthenticated:', isAuthenticated);
-    console.log('  - Current pathname:', window.location.pathname);
   }, [isInitialized, isAuthenticated]);
   
   if (!isInitialized) {
-    console.log('[ProtectedRoute] Rendering: Loading screen (waiting for initialization)');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0E0652]"></div>
@@ -54,10 +48,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
   
-  console.log('[ProtectedRoute] Initialized, checking authentication...');
-  console.log('[ProtectedRoute] isAuthenticated:', isAuthenticated);
   if (!isAuthenticated) {
-    console.log('[ProtectedRoute] NOT authenticated, redirecting to /login');
     return <Navigate to="/login" replace />;
   }
 
@@ -74,7 +65,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
 
   if (!preferencesLoaded) {
-    console.log('[ProtectedRoute] Waiting for preferences to load...');
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0E0652]"></div>
@@ -83,11 +73,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!hasPreferences && currentPath !== '/preferences') {
-    console.log('[ProtectedRoute] User missing preferences, redirecting to /preferences');
     return <Navigate to="/preferences" replace />;
   }
 
-  console.log('[ProtectedRoute] Rendering: Protected content');
   return <>{children}</>;
 }
 

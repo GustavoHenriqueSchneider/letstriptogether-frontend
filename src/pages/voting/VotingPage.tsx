@@ -19,7 +19,6 @@ export default function VotingPage() {
         const group = await groupsApi.getById(groupId);
         setGroupName(group.name);
       } catch (error) {
-        console.error('Erro ao carregar nome do grupo:', error);
       }
     };
     loadGroupName();

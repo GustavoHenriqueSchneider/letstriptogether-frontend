@@ -53,12 +53,8 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
   useEffect(() => {
-    console.log('[Dashboard] useEffect - isInitialized:', isInitialized);
     if (isInitialized) {
-      console.log('[Dashboard] Initialized, calling loadGroups...');
       loadGroups(1, true);
-    } else {
-      console.log('[Dashboard] Not initialized yet, waiting...');
     }
   }, [isInitialized]);
 
@@ -79,7 +75,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   }, [isLoadingMore, hasMore, isLoading]);
 
   const loadGroups = async (page = 1, isInitial = false) => {
-    console.log('[Dashboard] loadGroups() - Starting, page:', page, 'isInitial:', isInitial);
     if (isInitial) {
       setIsLoading(true);
       openModal('loading');
@@ -88,9 +83,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     }
     
     try {
-      console.log('[Dashboard] loadGroups() - Calling API...');
       const result = await groupsApi.getAllWithDetails(page, pageSize);
-      console.log('[Dashboard] loadGroups() - API success, groups count:', result.groups.length);
       
       if (isInitial) {
         setGroups(result.groups);
@@ -101,8 +94,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       setHasMore(result.hasMore);
       setPageNumber(page);
     } catch (error: any) {
-      console.error('[Dashboard] loadGroups() - API error:', error);
-      console.error('[Dashboard] loadGroups() - Error response:', error.response);
       showError('Erro ao carregar grupos', error.response?.data?.message || 'Não foi possível carregar os grupos');
     } finally {
       if (isInitial) {
@@ -111,7 +102,6 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       } else {
         setIsLoadingMore(false);
       }
-      console.log('[Dashboard] loadGroups() - Finished');
     }
   };
 

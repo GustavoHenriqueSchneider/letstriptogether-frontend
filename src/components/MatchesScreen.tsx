@@ -62,7 +62,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
       setCurrentPage(page);
       setAllMatchesLoaded(!result.hasMore);
     } catch (error: any) {
-      console.error('[MatchesScreen] Erro ao carregar matches:', error);
       if (isInitial) {
         if ([404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
@@ -98,7 +97,6 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
           await loadMatches(1, true);
         }
       } catch (error: any) {
-        console.error('[MatchesScreen] Erro ao verificar grupo:', error);
         if (isMounted && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           hasHandled404.current = true;
           showError(

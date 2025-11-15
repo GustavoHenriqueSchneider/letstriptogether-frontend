@@ -32,7 +32,6 @@ export default function GroupSettingsPage() {
           setGroupName(group.name);
         }
       } catch (error: any) {
-        console.error('Erro ao carregar nome do grupo:', error);
         if (isMounted && error.response?.status === 404 && !hasHandled404.current) {
           hasHandled404.current = true;
           setHas404(true);

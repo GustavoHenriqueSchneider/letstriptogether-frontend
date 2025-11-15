@@ -10,14 +10,12 @@ class SignalRClient {
 
   async connect(): Promise<void> {
     if (this.connection?.state === signalR.HubConnectionState.Connected) {
-      console.log('[WebSocket] Já está conectado');
       return;
     }
 
     const { accessToken } = useAuthStore.getState();
     
     if (!accessToken) {
-      console.warn('[WebSocket] Não há token de acesso. Não é possível conectar.');
       return;
     }
 
@@ -44,34 +42,25 @@ class SignalRClient {
       .build();
 
     this.connection.onclose((error) => {
-      console.log('[WebSocket] Conexão fechada', error);
       if (!this.isManualDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
         this.reconnectAttempts++;
-        console.log(`[WebSocket] Tentando reconectar (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       }
     });
 
     this.connection.onreconnecting((error) => {
-      console.log('[WebSocket] Reconectando...', error);
     });
 
     this.connection.onreconnected((connectionId) => {
-      console.log('[WebSocket] Reconectado com sucesso. ConnectionId:', connectionId);
       this.reconnectAttempts = 0;
     });
 
     this.connection.onclose((error) => {
-      if (error) {
-        console.error('[WebSocket] Erro na conexão:', error);
-      }
     });
 
     try {
       await this.connection.start();
-      console.log('[WebSocket] Conectado com sucesso!');
       this.reconnectAttempts = 0;
     } catch (error) {
-      console.error('[WebSocket] Erro ao conectar:', error);
       throw error;
     }
   }
@@ -82,9 +71,7 @@ class SignalRClient {
     if (this.connection) {
       try {
         await this.connection.stop();
-        console.log('[WebSocket] Desconectado com sucesso');
       } catch (error) {
-        console.error('[WebSocket] Erro ao desconectar:', error);
       } finally {
         this.connection = null;
         this.reconnectAttempts = 0;
@@ -106,36 +93,30 @@ class SignalRClient {
 
   onNotificationReceived(callback: (notification: any) => void): void {
     if (!this.connection) {
-      console.warn('[WebSocket] Conexão não existe. Não é possível registrar handler.');
       return;
     }
 
     this.connection.on('ReceiveNotification', (notification) => {
-      console.log('[WebSocket] Notificação recebida:', notification);
       callback(notification);
     });
   }
 
   onGroupUpdated(callback: (group: any) => void): void {
     if (!this.connection) {
-      console.warn('[WebSocket] Conexão não existe. Não é possível registrar handler.');
       return;
     }
 
     this.connection.on('GroupUpdated', (group) => {
-      console.log('[WebSocket] Grupo atualizado:', group);
       callback(group);
     });
   }
 
   onMatchUpdated(callback: (match: any) => void): void {
     if (!this.connection) {
-      console.warn('[WebSocket] Conexão não existe. Não é possível registrar handler.');
       return;
     }
 
     this.connection.on('MatchUpdated', (match) => {
-      console.log('[WebSocket] Match atualizado:', match);
       callback(match);
     });
   }

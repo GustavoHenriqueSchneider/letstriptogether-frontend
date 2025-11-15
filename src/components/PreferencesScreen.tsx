@@ -85,28 +85,21 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
   const isInitialized = useAuthStore((state) => state.isInitialized);
 
   useEffect(() => {
-    console.log('[PreferencesScreen] useEffect - isInitialized:', isInitialized);
     if (isInitialized) {
-      console.log('[PreferencesScreen] Initialized, calling loadUserPreferences...');
       loadUserPreferences();
-    } else {
-      console.log('[PreferencesScreen] Not initialized yet, waiting...');
     }
   }, [isInitialized]);
 
   const loadUserPreferences = async () => {
-    console.log('[PreferencesScreen] loadUserPreferences() - Starting');
     setIsLoading(true);
     openModal('loading');
     
     try {
-      console.log('[PreferencesScreen] loadUserPreferences() - Calling API /users/me...');
       const response = await apiClient.get<{ 
         name: string; 
         email: string; 
         preferences: UserPreferences | null;
       }>('/users/me');
-      console.log('[PreferencesScreen] loadUserPreferences() - API success, has preferences:', !!response.data.preferences);
       
       if (response.data.preferences) {
         const prefs = response.data.preferences;
@@ -150,13 +143,10 @@ export function PreferencesScreen({ onNavigate }: PreferencesScreenProps) {
         setTravelPrefs(newPrefs);
       }
     } catch (error: any) {
-      console.error('[PreferencesScreen] loadUserPreferences() - API error:', error);
-      console.error('[PreferencesScreen] loadUserPreferences() - Error response:', error.response);
       showError('Erro ao carregar preferências', error.response?.data?.message || 'Não foi possível carregar suas preferências');
     } finally {
       setIsLoading(false);
       closeModal('loading');
-      console.log('[PreferencesScreen] loadUserPreferences() - Finished');
     }
   };
 

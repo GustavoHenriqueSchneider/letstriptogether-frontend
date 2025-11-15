@@ -50,7 +50,6 @@ export const matchesApi = {
           totalVotes: 0
         };
       } catch (error) {
-        console.error(`Erro ao buscar match ${item.id}:`, error);
         return {
           id: item.id,
           destination: {

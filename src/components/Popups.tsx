@@ -336,7 +336,6 @@ export function InviteLinkPopup({ isOpen, onClose, groupId }: PopupProps & { gro
         throw new Error('Resposta da API não contém inviteLink');
       }
     } catch (error: any) {
-      console.error('[InviteLinkPopup] Erro ao buscar/criar convite:', error);
       setIsLoading(false);
       closeModal('loading');
       showError(
@@ -383,7 +382,6 @@ export function InviteLinkPopup({ isOpen, onClose, groupId }: PopupProps & { gro
       closeModal('loading');
       showSuccess('Novo convite criado', 'Um novo link de convite foi gerado com sucesso.');
     } catch (error: any) {
-      console.error('[InviteLinkPopup] Erro ao gerar novo convite:', error);
       setIsLoading(false);
       closeModal('loading');
       showError(

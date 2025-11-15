@@ -45,7 +45,6 @@ export const membersApi = {
           votesCount: memberDetails.votesCount
         };
       } catch (error) {
-        console.error(`Erro ao buscar detalhes do membro ${item.id}:`, error);
         return {
           id: item.id,
           name: 'Membro',
@@ -99,7 +98,6 @@ export const membersApi = {
     const token = response.data.token || (response.data as any).data?.token;
     
     if (!token) {
-      console.error('[membersApi.invite] token não encontrado na resposta:', response.data);
       throw new Error('Resposta da API não contém token');
     }
 
@@ -121,7 +119,6 @@ export const membersApi = {
       const token = response.data.token || (response.data as any).data?.token;
       
       if (!token) {
-        console.warn('[membersApi.getActiveInvitation] token não encontrado na resposta:', response.data);
         return null;
       }
 
@@ -132,7 +129,6 @@ export const membersApi = {
         inviteLink
       };
     } catch (error: any) {
-      console.log('[membersApi.getActiveInvitation] Erro ao buscar convite:', error);
       return null;
     }
   },

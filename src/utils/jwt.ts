@@ -9,7 +9,6 @@ export function decodeJWT(token: string): any | null {
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(decoded);
   } catch (error) {
-    console.error('Erro ao decodificar JWT:', error);
     return null;
   }
 }

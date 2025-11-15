@@ -29,25 +29,22 @@ export function useWebSocket() {
 
     if (isAuthenticated && !isPublicRoute) {
       signalRClient.connect().catch((error) => {
-        console.error('Erro ao conectar WebSocket:', error);
         showError('Erro ao conectar com o servidor em tempo real');
       });
     } else {
-      signalRClient.disconnect().catch((error) => {
-        console.error('Erro ao desconectar WebSocket:', error);
+      signalRClient.disconnect().catch(() => {
       });
     }
 
     return () => {
       if (!isAuthenticated) {
-        signalRClient.disconnect().catch(console.error);
+        signalRClient.disconnect().catch(() => {
+        });
       }
     };
   }, [isAuthenticated, currentPath, showError]);
 
   const handleNotification = useCallback((notification: Notification) => {
-    console.log('Nova notificação recebida:', notification);
-
     const normalizedType = (notification.type ?? 'match') as Notification['type'];
     const createdAt = notification.createdAt ?? new Date().toISOString();
 
@@ -86,11 +83,9 @@ export function useWebSocket() {
   }, [addNotification, showSuccess]);
 
   const handleGroupUpdated = useCallback((group: any) => {
-    console.log('Grupo atualizado:', group);
   }, []);
 
   const handleMatchUpdated = useCallback((match: any) => {
-    console.log('Match atualizado:', match);
   }, []);
 
   useEffect(() => {

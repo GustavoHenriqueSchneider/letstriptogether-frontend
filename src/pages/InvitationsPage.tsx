@@ -53,7 +53,6 @@ export default function InvitationsPage() {
           createdBy: invitation.createdBy,
         });
       } catch (error: any) {
-        console.error('[InvitationsPage] Failed to load invitation:', error);
         setInvitationState({ status: 'expired' });
       }
     };
@@ -71,7 +70,6 @@ export default function InvitationsPage() {
         await invitationsApi.refuseInvitation(token);
       }
     } catch (error: any) {
-      console.error('[InvitationsPage] Failed to process invitation:', error);
       showError(
         'Erro no convite',
         'Houve um erro ao processar o convite. Tente novamente mais tarde!'

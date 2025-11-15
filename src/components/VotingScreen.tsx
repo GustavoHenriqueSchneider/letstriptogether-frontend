@@ -74,7 +74,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
           setCurrentPage(1);
         }
       } catch (error: any) {
-        console.error('[VotingScreen] Erro ao verificar grupo ou carregar destinos:', error);
         if (isMounted && !shouldStop && [404, 400].includes(error.response?.status) && !hasHandled404.current) {
           shouldStop = true;
           hasHandled404.current = true;
@@ -129,7 +128,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         setHasMore(false);
       }
     } catch (error) {
-      console.error('Erro ao carregar mais destinos:', error);
     } finally {
       setIsLoadingMore(false);
     }
@@ -245,7 +243,6 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
         }
       }
     } catch (error) {
-      console.error('Erro ao votar:', error);
       setVotes(prev => ({...prev, [destinationId]: vote}));
     if (currentIndex < destinations.length - 1) {
       setCurrentIndex(currentIndex + 1);

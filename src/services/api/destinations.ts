@@ -81,7 +81,6 @@ export const destinationsApi = {
           id: item.id
         };
       } catch (error) {
-        console.error(`Erro ao buscar destino ${item.id}:`, error);
         return {
           id: item.id,
           name: 'Destino',

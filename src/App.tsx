@@ -107,28 +107,19 @@ function WebSocketProvider() {
 }
 
 export default function App() {
-  console.log('[App] Component rendering');
   const isInitialized = useAuthStore((state) => state.isInitialized);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   
   React.useEffect(() => {
-    console.log('[App] useEffect - State changed:');
-    console.log('  - isInitialized:', isInitialized);
-    console.log('  - isAuthenticated:', isAuthenticated);
   }, [isInitialized, isAuthenticated]);
   
   React.useEffect(() => {
-    console.log('[App] useEffect - Checking initialization status:', isInitialized);
     if (!isInitialized) {
-      console.log('[App] Not initialized, calling init()...');
       useAuthStore.getState().init();
-    } else {
-      console.log('[App] Already initialized');
     }
   }, [isInitialized]);
 
   if (!isInitialized) {
-    console.log('[App] Rendering: Loading screen (waiting for initialization)');
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0E0652]"></div>
@@ -136,8 +127,6 @@ export default function App() {
     );
   }
 
-  console.log('[App] Rendering: Main app (router, modals, websocket)');
-  console.log('[App] Current pathname:', window.location.pathname);
   return (
     <div className="min-h-screen bg-gray-50">
       <RouterProvider router={router} />

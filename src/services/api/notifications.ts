@@ -6,7 +6,6 @@ export const notificationsApi = {
   },
 
   async markAsRead(id: string): Promise<void> {
-    console.log(`Mark notification ${id} as read`);
     return Promise.resolve();
   }
 };
