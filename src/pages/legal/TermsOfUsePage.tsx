@@ -35,12 +35,9 @@ export default function TermsOfUsePage() {
         <section className="py-20 px-6 bg-white">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-16">
-              <h1 className="text-4xl font-bold text-[#01001D] mb-6 mt-4">
+              <h1 className="text-4xl font-bold text-[#01001D] mb-4 mt-4">
                 Termos de Uso
               </h1>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-                Conheça os termos e condições que regem o uso do Let's Trip Together.
-              </p>
             </div>
 
             <div className="max-w-4xl mx-auto text-left space-y-12">
