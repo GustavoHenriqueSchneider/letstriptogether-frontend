@@ -17,7 +17,7 @@
         'next-themes@0.4.6': 'next-themes',
         'lucide-react@0.487.0': 'lucide-react',
         'input-otp@1.4.2': 'input-otp',
-        'asset/9461ca4209b21dd0f47647fbada0c1c80b8c5f4a.png': path.resolve(__dirname, './src/assets/9461ca4209b21dd0f47647fbada0c1c80b8c5f4a.png'),
+        'asset/background.png': path.resolve(__dirname, './src/assets/background.png'),
         'embla-carousel-react@8.6.0': 'embla-carousel-react',
         'cmdk@1.1.1': 'cmdk',
         'class-variance-authority@0.7.1': 'class-variance-authority',
@@ -56,6 +56,6 @@
     },
     server: {
       port: 3000,
-      open: true
+      open: false
     },
   });

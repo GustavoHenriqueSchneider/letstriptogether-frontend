@@ -66,6 +66,15 @@ npm run dev
 
 A aplicação estará disponível em `http://localhost:3000`
 
+### Executando com Docker
+
+```bash
+docker build -t letstriptogether-frontend .
+docker run --name letstriptogether-frontend -p 3000:3000 letstriptogether-frontend
+```
+
+O primeiro comando cria a imagem Docker e o segundo sobe o contêiner expondo a aplicação na porta `3000`.
+
 ## ⚙️ Configuração
 
 ### Variáveis de Ambiente

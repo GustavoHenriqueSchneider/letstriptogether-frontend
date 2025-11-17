@@ -5,7 +5,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, X, Check } from 'lucide-react';
-import backgroundImage from 'asset/9461ca4209b21dd0f47647fbada0c1c80b8c5f4a.png';
+import backgroundImage from 'asset/background.png';
 import { authApi } from '@/services/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useModalStore } from '@/store/modalStore';
