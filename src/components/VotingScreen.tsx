@@ -17,7 +17,7 @@ import {
   Users,
   Star,
   Settings,
-  Globe
+  ThumbsUp
 } from 'lucide-react';
 import { Header } from './Header';
 import { useModalStore } from '@/store/modalStore';
@@ -327,7 +327,7 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
               onClick={() => onNavigate('group-vote')}
               className="flex flex-col items-center p-2 text-[#0E0652] bg-blue-50 rounded-lg"
             >
-              <Globe className="h-5 w-5" />
+              <ThumbsUp className="h-5 w-5" />
               <span className="text-xs mt-1">Votar</span>
             </button>
             <button 
@@ -457,54 +457,60 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
       </div>
 
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#01001D]">
-              {selectedDestination?.name}
-            </DialogTitle>
-          </DialogHeader>
+        <DialogContent className="max-w-7xl w-[calc(100%-2rem)] !flex !flex-col !p-0 !max-h-[90vh] !overflow-hidden" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+          <div className="px-6 pt-6 pb-4 border-b flex-shrink-0">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-[#01001D]">
+                {selectedDestination?.name}
+              </DialogTitle>
+            </DialogHeader>
+          </div>
           
-          {selectedDestination && (
-            <div className="space-y-6 mt-4">
-              <div>
-                <p className="text-sm text-gray-700">{selectedDestination.description}</p>
-              </div>
-
-              {selectedDestination.preferences && selectedDestination.preferences.length > 0 && (
+          <div style={{ flex: '1 1 auto', overflowY: 'auto', overflowX: 'hidden', maxHeight: 'calc(90vh - 120px)', minHeight: 0 }}>
+            <div className="px-6 pb-6 pt-4">
+              {selectedDestination && (
+                <div className="space-y-6">
                 <div>
-                  <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {[...new Set(selectedDestination.preferences)].map((pref, index) => (
-                      <Badge key={index} className="bg-[#6496D8] text-white">
-                        {getPreferenceLabel(pref)}
-                      </Badge>
-                    ))}
-                  </div>
+                  <p className="text-sm text-gray-700">{selectedDestination.description}</p>
                 </div>
-              )}
 
-              {selectedDestination.attractions && selectedDestination.attractions.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-[#01001D] mb-3">Atrações do destino:</h4>
-                  <div className="space-y-3">
-                    {selectedDestination.attractions.map((attraction, index) => (
-                      <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                        <div className="flex items-center justify-between mb-1">
-                          <h5 className="font-medium text-[#01001D]">{attraction.name}</h5>
-                          {attraction.category && (
-                            <Badge variant="outline" className="text-xs">
-                              {getPreferenceLabel(attraction.category)}
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-600">{attraction.description}</p>
-                      </div>
-                    ))}
+                {selectedDestination.preferences && selectedDestination.preferences.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
+                    <div className="w-full" style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {[...new Set(selectedDestination.preferences)].map((pref, index) => (
+                        <Badge key={index} className="bg-[#6496D8] text-white whitespace-nowrap">
+                          {getPreferenceLabel(pref)}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
+                )}
+
+                {selectedDestination.attractions && selectedDestination.attractions.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#01001D] mb-3">Atrações do destino:</h4>
+                    <div className="space-y-3">
+                      {selectedDestination.attractions.map((attraction, index) => (
+                        <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                          <div className="flex items-center justify-between mb-1">
+                            <h5 className="font-medium text-[#01001D]">{attraction.name}</h5>
+                            {attraction.category && (
+                              <Badge variant="outline" className="text-xs">
+                                {getPreferenceLabel(attraction.category)}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-600">{attraction.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 </div>
               )}
             </div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -521,7 +527,7 @@ export function VotingScreen({ groupId, groupName, onNavigate }: VotingScreenPro
             onClick={() => onNavigate('group-vote')}
             className="flex flex-col items-center p-2 text-[#0E0652] bg-blue-50 rounded-lg"
           >
-            <Globe className="h-5 w-5" />
+            <ThumbsUp className="h-5 w-5" />
             <span className="text-xs mt-1">Votar</span>
           </button>
           <button 

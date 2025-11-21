@@ -10,6 +10,7 @@ import {
   Star
 } from 'lucide-react';
 import { useNotificationsStore } from '@/store/notificationsStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface NotificationsScreenProps {
   onNavigate: (screen: string) => void;
@@ -33,12 +34,19 @@ const formatDateTime = (timestamp: string) => {
 export function NotificationsScreen({ onNavigate }: NotificationsScreenProps) {
   const notifications = useNotificationsStore((state) => state.notifications);
   const markAllAsRead = useNotificationsStore((state) => state.markAllAsRead);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      useNotificationsStore.getState().clearNotifications();
+      localStorage.removeItem('ltg.notifications');
+      return;
+    }
+    
     if (notifications.length > 0) {
       markAllAsRead();
     }
-  }, [notifications.length, markAllAsRead]);
+  }, [notifications.length, markAllAsRead, isAuthenticated]);
 
   const getIcon = (type: string) => {
     switch (type) {

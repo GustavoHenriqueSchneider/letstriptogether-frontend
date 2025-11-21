@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { 
   Users,
-  Globe,
+  ThumbsUp,
   Settings,
   UserPlus,
   Star,
@@ -262,7 +262,7 @@ export function MembersScreen({ groupId, groupName, onNavigate, showInviteLink }
             onClick={() => onNavigate('group-vote')}
             className="flex flex-col items-center p-2 text-gray-600"
           >
-            <Globe className="h-5 w-5" />
+            <ThumbsUp className="h-5 w-5" />
             <span className="text-xs mt-1">Votar</span>
           </button>
           <button 

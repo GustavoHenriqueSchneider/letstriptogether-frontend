@@ -285,6 +285,14 @@ export function ProfileScreen({ onNavigate, onLogout, showSuccess, showConfirmat
               <FileText className="h-4 w-4 mr-2" />
               Termos de uso
             </Button>
+            <Button 
+              variant="outline" 
+              className="w-full justify-start border-gray-200 text-[#01001D] hover:border-[#6496D8] hover:bg-white hover:text-[#01001D]"
+              onClick={() => window.open('/privacy-policy', '_blank')}
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Política de privacidade
+            </Button>
           </CardContent>
         </Card>
 

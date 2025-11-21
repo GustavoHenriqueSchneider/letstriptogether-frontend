@@ -3,6 +3,7 @@ import type { User } from '@/types';
 import { cookies } from '@/utils/cookies';
 import { signalRClient } from '@/services/websocket/signalrClient';
 import { usersApi } from '@/services/api/users';
+import { useNotificationsStore } from '@/store/notificationsStore';
 
 function isTokenExpired(token: string): boolean {
   try {
@@ -54,7 +55,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   
   login: async (user, accessToken, sessionId, refreshToken, refreshTokenInCookie = true) => {
     localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('sessionId', sessionId);
     localStorage.setItem('authUser', JSON.stringify(user));
     
     if (refreshTokenInCookie) {
@@ -63,10 +63,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       localStorage.setItem('refreshToken', refreshToken);
     }
     
+    if (sessionId) {
+      localStorage.setItem('sessionId', sessionId);
+      cookies.set('sessionId', sessionId, 30);
+    } else {
+      const existingSessionId = cookies.get('sessionId') || localStorage.getItem('sessionId');
+      if (existingSessionId) {
+        localStorage.setItem('sessionId', existingSessionId);
+      }
+    }
+    
+    const finalSessionId = sessionId || cookies.get('sessionId') || localStorage.getItem('sessionId') || null;
+    
     set({ 
       user, 
       accessToken, 
-      sessionId, 
+      sessionId: finalSessionId, 
       refreshToken, 
       isAuthenticated: true 
     });
@@ -85,10 +97,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
     }
     
+    useNotificationsStore.getState().clearNotifications();
+    
     localStorage.removeItem('accessToken');
     localStorage.removeItem('sessionId');
     localStorage.removeItem('authUser');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('ltg.notifications');
     
     cookies.remove('refreshToken');
     
@@ -136,6 +151,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     const userStr = localStorage.getItem('authUser');
     
     const refreshToken = cookies.get('refreshToken') || localStorage.getItem('refreshToken');
+    
+    if (!accessToken || !userStr) {
+      useNotificationsStore.getState().clearNotifications();
+      localStorage.removeItem('ltg.notifications');
+    }
     
     if (accessToken && userStr) {
       const tokenExpired = isTokenExpired(accessToken);

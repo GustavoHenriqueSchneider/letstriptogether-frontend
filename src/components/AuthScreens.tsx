@@ -5,7 +5,7 @@ import { Label } from "./ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, X, Check } from 'lucide-react';
-import backgroundImage from 'asset/background.png';
+import backgroundImage from '@/assets/background.png';
 import { authApi } from '@/services/api/auth';
 import { useAuthStore } from '@/store/authStore';
 import { useModalStore } from '@/store/modalStore';
@@ -149,9 +149,17 @@ export function LoginScreen({ onNavigate, onLogin }: AuthScreensProps) {
         </div>
 
         <Card className="shadow-2xl border-0">
-          <CardHeader>
+          <CardHeader className="relative">
+            <button 
+              onClick={() => onNavigate('')}
+              className="absolute left-0 top-0 p-6 text-[#01001D] hover:text-[#6496D8]"
+              disabled={isLoading}
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <CardTitle className="text-center text-[#01001D]">Acesse sua conta</CardTitle>
             <CardDescription className="text-center">
-              Acesse sua conta e comece a planejar!
+              Comece a planejar viagens em grupo!
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

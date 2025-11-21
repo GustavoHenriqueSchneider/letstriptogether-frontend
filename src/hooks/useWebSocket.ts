@@ -2,7 +2,6 @@ import { useEffect, useCallback, useState } from 'react';
 import { router } from '@/app/router';
 import { signalRClient } from '@/services/websocket/signalrClient';
 import { useAuthStore } from '@/store/authStore';
-import { useModalStore } from '@/store/modalStore';
 import type { Notification } from '@/types';
 import { useNotificationsStore } from '@/store/notificationsStore';
 
@@ -10,7 +9,6 @@ const PUBLIC_ROUTES = ['/', '/login', '/register', '/terms-of-use', '/about-us']
 
 export function useWebSocket() {
   const { isAuthenticated } = useAuthStore();
-  const { showSuccess, showError } = useModalStore();
   const addNotification = useNotificationsStore((state) => state.addNotification);
   const [currentPath, setCurrentPath] = useState(router.state.location.pathname);
 
@@ -26,23 +24,30 @@ export function useWebSocket() {
 
   useEffect(() => {
     const isPublicRoute = PUBLIC_ROUTES.includes(currentPath);
+    let mounted = true;
 
     if (isAuthenticated && !isPublicRoute) {
-      signalRClient.connect().catch((error) => {
-        showError('Erro ao conectar com o servidor em tempo real');
-      });
-    } else {
-      signalRClient.disconnect().catch(() => {
-      });
-    }
+      const connectTimer = setTimeout(() => {
+        if (mounted) {
+          signalRClient.connect().catch(() => {
+          });
+        }
+      }, 100);
 
-    return () => {
-      if (!isAuthenticated) {
-        signalRClient.disconnect().catch(() => {
-        });
-      }
-    };
-  }, [isAuthenticated, currentPath, showError]);
+      return () => {
+        mounted = false;
+        clearTimeout(connectTimer);
+        if (!isAuthenticated) {
+          signalRClient.disconnect().catch(() => {});
+        }
+      };
+    } else {
+      signalRClient.disconnect().catch(() => {});
+      return () => {
+        mounted = false;
+      };
+    }
+  }, [isAuthenticated, currentPath]);
 
   const handleNotification = useCallback((notification: Notification) => {
     const normalizedType = (notification.type ?? 'match') as Notification['type'];
@@ -80,7 +85,7 @@ export function useWebSocket() {
       createdAt,
     });
 
-  }, [addNotification, showSuccess]);
+  }, [addNotification]);
 
   const handleGroupUpdated = useCallback((group: any) => {
   }, []);

@@ -18,6 +18,24 @@ export const authApi = {
 
     const { accessToken, refreshToken } = response.data;
 
+    let sessionId = cookies.get('sessionId') || '';
+    
+    if (!sessionId) {
+      const sessionIdFromResponse = response.headers['set-cookie']
+        ?.find((cookie: string) => cookie.startsWith('sessionId='))
+        ?.split(';')[0]
+        ?.split('=')[1];
+      
+      if (sessionIdFromResponse) {
+        sessionId = sessionIdFromResponse;
+        cookies.set('sessionId', sessionId, 30);
+      } else {
+        const generatedSessionId = `session_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        sessionId = generatedSessionId;
+        cookies.set('sessionId', sessionId, 30);
+      }
+    }
+
     const userResponse = await apiClient.get<{ name: string; email: string; preferences: any }>('/users/me', {
       headers: {
         Authorization: `Bearer ${accessToken}`
@@ -30,8 +48,6 @@ export const authApi = {
       email: userResponse.data.email,
       avatar: undefined
     };
-
-    const sessionId = cookies.get('sessionId') || '';
 
     return {
       user,

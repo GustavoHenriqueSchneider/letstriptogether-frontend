@@ -10,7 +10,7 @@ import {
   ChevronRight,
   ChevronDown,
   Settings,
-  Globe,
+  ThumbsUp,
   Users,
   X
 } from 'lucide-react';
@@ -217,12 +217,13 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
                   return (
                     <div 
                       key={match.id} 
-                      className={`p-3 bg-gray-50 rounded-lg transition-all ${
+                      onClick={() => setSelectedMatch(selectedMatch === match.id ? null : match.id)}
+                      className={`p-3 bg-gray-50 rounded-lg transition-all cursor-pointer w-full ${
                         selectedMatch === match.id ? 'ring-2 ring-[#6496D8] shadow-lg' : ''
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex space-x-4 flex-1 items-center">
+                        <div className="flex space-x-4 flex-1 items-center min-w-0">
                           <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-gray-200">
                             {destinationImage ? (
                               <img
@@ -244,7 +245,10 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
 
                         <div className="flex items-center space-x-2 ml-2">
                           <button
-                            onClick={() => setSelectedMatch(selectedMatch === match.id ? null : match.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedMatch(selectedMatch === match.id ? null : match.id);
+                            }}
                             className="p-1 hover:bg-blue-100 hover:border-2 hover:border-[#6496D8] rounded-full transition-all duration-200 text-gray-500 hover:text-[#6496D8] hover:scale-110 border-2 border-transparent"
                             aria-label={selectedMatch === match.id ? "Recolher" : "Expandir"}
                           >
@@ -269,13 +273,13 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
                       </div>
 
                       {selectedMatch === match.id && (
-                        <div className="mt-4 pt-4 border-t space-y-4">
+                        <div className="mt-4 pt-4 border-t space-y-4 w-full">
                           {match.destination.preferences && match.destination.preferences.length > 0 && (
-                            <div>
+                            <div className="w-full">
                               <h4 className="text-sm font-semibold text-[#01001D] mb-2">Preferências do grupo atendidas:</h4>
-                              <div className="flex flex-wrap gap-2">
+                              <div className="w-full" style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                                 {Array.from(new Set(match.destination.preferences)).map((pref, index) => (
-                                  <Badge key={index} className="bg-[#6496D8] text-white">
+                                  <Badge key={index} className="bg-[#6496D8] text-white whitespace-nowrap">
                                     {getPreferenceLabel(pref as string)}
                                   </Badge>
                                 ))}
@@ -334,7 +338,7 @@ export function MatchesScreen({ groupId, groupName, onNavigate }: MatchesScreenP
             onClick={() => onNavigate('group-vote')}
             className="flex flex-col items-center p-2 text-gray-600"
           >
-            <Globe className="h-5 w-5" />
+            <ThumbsUp className="h-5 w-5" />
             <span className="text-xs mt-1">Votar</span>
           </button>
           <button 

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { 
   Settings,
-  Globe,
+  ThumbsUp,
   Star,
   Users,
   Trash2,
@@ -160,7 +160,7 @@ export function GroupSettingsScreen({ groupId, groupName, onNavigate }: GroupSet
             onClick={() => onNavigate('group-vote')}
             className="flex flex-col items-center p-2 text-gray-600"
           >
-            <Globe className="h-5 w-5" />
+            <ThumbsUp className="h-5 w-5" />
             <span className="text-xs mt-1">Votar</span>
           </button>
           <button 

@@ -5,7 +5,7 @@ import { invitationsApi } from '@/services/api/invitations';
 import { useModalStore } from '@/store/modalStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import backgroundImage from 'asset/background.png';
+import backgroundImage from '@/assets/background.png';
 
 type InvitationState =
   | { status: 'loading' }
