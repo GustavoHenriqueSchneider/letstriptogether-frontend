@@ -325,6 +325,60 @@ export default function PrivacyPolicyPage() {
 
               <section className="border-t border-gray-200 pt-10 mb-4 space-y-4">
                 <h2 className="text-2xl font-semibold text-[#01001D] mt-4 mb-4">
+                  7.1. Solicitação de Remoção por Terceiro (Cadastro Não Autorizado)
+                </h2>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  Nosso sistema possui autenticação de dois fatores no processo de registro, exigindo que um código de confirmação seja enviado e validado no endereço de email informado antes que qualquer cadastro seja completado. Isso torna extremamente improvável que um cadastro não autorizado seja finalizado, pois o código de confirmação é enviado exclusivamente para o email informado.
+                </p>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  No entanto, caso você acredite que seus dados pessoais foram cadastrados sem sua autorização (por exemplo, em caso de email compartilhado, acesso temporário não autorizado, ou qualquer outra circunstância excepcional), você tem o direito de solicitar a remoção ou anonimização desses dados, conforme previsto na LGPD (Art. 18, inciso VI).
+                </p>
+                <p className="text-gray-700 text-lg leading-relaxed font-semibold">
+                  Como Solicitar a Remoção:
+                </p>
+                <ol className="text-gray-700 text-lg leading-relaxed space-y-2" style={{ listStyleType: 'decimal', paddingLeft: '1.5rem' }}>
+                  <li>
+                    Entre em contato conosco através do email: <a href="mailto:letstriptogether2025@outlook.com" className="text-blue-500 hover:text-blue-600">letstriptogether2025@outlook.com</a>
+                  </li>
+                  <li>
+                    No assunto do email, informe: "Solicitação de Remoção - Cadastro Não Autorizado"
+                  </li>
+                  <li>
+                    Forneça as seguintes informações:
+                    <ul className="mt-2 space-y-1" style={{ listStyleType: 'disc', paddingLeft: '2rem' }}>
+                      <li>O endereço de email que foi cadastrado sem sua autorização</li>
+                      <li>Cópia de documento de identificação (RG ou CNH) para comprovar que você é o titular do email</li>
+                      <li>Breve descrição da situação</li>
+                    </ul>
+                  </li>
+                </ol>
+                <p className="text-gray-700 text-lg leading-relaxed font-semibold mt-4">
+                  Processo de Verificação:
+                </p>
+                <ul className="text-gray-700 text-lg leading-relaxed space-y-2" style={{ listStyleType: 'disc', paddingLeft: '1.5rem' }}>
+                  <li>
+                    Analisaremos sua solicitação em até 15 (quinze) dias úteis, conforme previsto na LGPD (Art. 18, §1º)
+                  </li>
+                  <li>
+                    Poderemos solicitar informações adicionais para verificar sua identidade e a titularidade do email
+                  </li>
+                  <li>
+                    Após verificação, procederemos com a remoção ou anonimização dos dados cadastrados sem sua autorização
+                  </li>
+                  <li>
+                    Você será notificado sobre o resultado da solicitação através do mesmo email utilizado para contato
+                  </li>
+                </ul>
+                <p className="text-gray-700 text-lg leading-relaxed font-semibold mt-4">
+                  Prazo de Resposta:
+                </p>
+                <p className="text-gray-700 text-lg leading-relaxed">
+                  Conforme a LGPD (Art. 18, §1º), responderemos sua solicitação em até 15 (quinze) dias, prorrogável por mais 15 (quinze) dias mediante justificativa. Caso não seja possível atender sua solicitação, informaremos os motivos da recusa.
+                </p>
+              </section>
+
+              <section className="border-t border-gray-200 pt-10 mb-4 space-y-4">
+                <h2 className="text-2xl font-semibold text-[#01001D] mt-4 mb-4">
                   8. Por Quanto Tempo Ficamos com Seus Dados 
                 </h2>
                 <p className="text-gray-700 text-lg leading-relaxed">
